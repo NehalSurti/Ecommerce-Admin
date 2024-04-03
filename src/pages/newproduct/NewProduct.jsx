@@ -14,6 +14,9 @@ export default function NewProduct() {
   const [inputs, setInputs] = useState({});
   const [file, setFile] = useState(null);
   const [cat, setCat] = useState([]);
+  const [color, setColor] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const dispatch = useDispatch();
 
   function handleChange(e) {
@@ -24,6 +27,14 @@ export default function NewProduct() {
 
   function handleCategories(e) {
     setCat(e.target.value.split(","));
+  }
+
+  function handleColors(e) {
+    setColor(e.target.value.split(","));
+  }
+
+  function handleSizes(e) {
+    setSizes(e.target.value.split(","));
   }
 
   function handleClick(e) {
@@ -66,8 +77,29 @@ export default function NewProduct() {
       () => {
         // Upload completed successfully, now we can get the download URL
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          const product = { ...inputs, img: downloadURL, categories: cat };
-          dispatch(addProductAsync(product));
+          const product = {
+            ...inputs,
+            img: downloadURL,
+            categories: cat,
+            color: color,
+            size: sizes,
+          };
+          dispatch(addProductAsync(product))
+            .then(() => {
+              // Dispatch successful, show success popup
+              setShowSuccessPopup(true);
+              // Reset form
+              setInputs({});
+              setFile(null);
+              setCat([]);
+              setColor([]);
+              setSizes([]);
+              document.getElementById("file").value = null;
+            })
+            .catch((error) => {
+              // Handle dispatch error
+              console.error("Error adding product:", error);
+            });
         });
       }
     );
@@ -83,6 +115,7 @@ export default function NewProduct() {
             <input
               type="file"
               id="file"
+              // value={file}
               onChange={(e) => setFile(e.target.files[0])}
             />
           </div>
@@ -93,6 +126,7 @@ export default function NewProduct() {
             <input
               name="title"
               type="text"
+              value={inputs.title || ""}
               placeholder="Enter title"
               onChange={handleChange}
             />
@@ -102,6 +136,7 @@ export default function NewProduct() {
             <input
               name="desc"
               type="text"
+              value={inputs.desc  || ""}
               placeholder="Enter description"
               onChange={handleChange}
             />
@@ -111,6 +146,7 @@ export default function NewProduct() {
             <input
               name="price"
               type="number"
+              value={inputs.price  || ""}
               placeholder="Enter Price"
               onChange={handleChange}
             />
@@ -119,6 +155,7 @@ export default function NewProduct() {
             <label>Categories</label>
             <input
               type="text"
+              value={cat}
               placeholder="Jeans, Skirts.."
               onChange={handleCategories}
             />
@@ -127,16 +164,18 @@ export default function NewProduct() {
             <label>Sizes</label>
             <input
               type="text"
+              value={sizes}
               placeholder="S, M.."
-              onChange={handleCategories}
+              onChange={handleSizes}
             />
           </div>
           <div className="addProductItem">
             <label>Color</label>
             <input
               type="text"
+              value={color}
               placeholder="Red, Blue.."
-              onChange={handleCategories}
+              onChange={handleColors}
             />
           </div>
           <div className="addProductItem">
@@ -153,6 +192,12 @@ export default function NewProduct() {
           </button>
         </div>
       </form>
+      {showSuccessPopup && (
+        <div className="successPopup">
+          <p>Product added successfully!</p>
+          <button onClick={() => setShowSuccessPopup(false)}>Close</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,9 +13,9 @@ export default function User() {
     <div className="user">
       <div className="userTitleContainer">
         <h1 className="userTitle">Edit User</h1>
-        <button onClick={() => navigate('/newUser')} className="userAddButton">
+        {/* <button onClick={() => navigate('/newUser')} className="userAddButton">
           Create
-        </button>
+        </button> */}
       </div>
       <div className="userContainer">
         <div className="userShow">

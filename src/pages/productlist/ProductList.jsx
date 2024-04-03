@@ -79,6 +79,7 @@ export default function ProductList() {
       <DataGrid
         rows={products}
         columns={columns}
+        getRowHeight={() => 'auto'}
         getRowId={(row) => row._id}
         disableRowSelectionOnClick
         initialState={{

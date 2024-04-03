@@ -10,11 +10,11 @@ export default function UserList() {
   const [data, setData] = useState(userRows);
 
   const handleDelete = (id) => {
-    setData(data.filter((item)=>item.id !== id));
-  }
+    setData(data.filter((item) => item.id !== id));
+  };
 
   const columns = [
-    { field: "id", headerName: "ID", width: 90 },
+    { field: "id", headerName: "ID", width: 150 },
     {
       field: "user",
       headerName: "User",
@@ -28,7 +28,10 @@ export default function UserList() {
         );
       },
     },
-    { field: "email", headerName: "Email", width: 200 },
+    { field: "email", headerName: "Email", width: 150 },
+    { field: "isAdmin", headerName: "IsAdmin", width: 80 },
+    { field: "address", headerName: "Address", width: 120 },
+    { field: "phone", headerName: "Phone", width: 120 },
     {
       field: "status",
       headerName: "Status",
@@ -46,8 +49,16 @@ export default function UserList() {
       renderCell: (params) => {
         return (
           <>
-            <button onClick={()=>navigate('/user/'+ params.row.id)} className="userListEdit">Edit</button>
-            <DeleteOutlineIcon onClick={()=>handleDelete(params.row.id)} className="userListDelete"></DeleteOutlineIcon>
+            <button
+              onClick={() => navigate("/user/" + params.row.id)}
+              className="userListEdit"
+            >
+              Edit
+            </button>
+            <DeleteOutlineIcon
+              onClick={() => handleDelete(params.row.id)}
+              className="userListDelete"
+            ></DeleteOutlineIcon>
           </>
         );
       },
@@ -56,6 +67,9 @@ export default function UserList() {
 
   return (
     <div className="userList">
+      <button onClick={() => navigate("/newUser")} className="userAddButton">
+        Create New User
+      </button>
       <DataGrid
         rows={data}
         columns={columns}

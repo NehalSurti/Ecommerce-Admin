@@ -97,51 +97,58 @@ export default function Product() {
             </div>
             <div className="productInfoItem">
               <span className="productInfoKey">In stock:</span>
-              <span className="productInfoValue">{product.inStock}</span>
+              <span className="productInfoValue">
+                {product.inStock ? "True" : "False"}
+              </span>
             </div>
           </div>
         </div>
       </div>
       <div className="productBottom">
         <form className="productForm">
-          <div className="productFormLeft">
-            <div className="editProductItem">
-              <label>Product Name</label>
-              <input type="text" placeholder={product.title} />
+          <div className="productFormTop">
+            <div className="productFormLeft">
+              <div className="editProductItem">
+                <label>Product Name</label>
+                <input type="text" placeholder={product.title} />
+              </div>
+              <div className="editProductItem">
+                <label>Product Description</label>
+                <input type="text" placeholder={product.desc} />
+              </div>
+              <div className="editProductItem">
+                <label>Price</label>
+                <input type="text" placeholder={product.price} />
+              </div>
+              <div className="editProductItem">
+                <label>Categories</label>
+                <input type="text" placeholder={product.categories} />
+              </div>
+              <div className="editProductItem">
+                <label>Sizes</label>
+                <input type="text" placeholder={product.size} />
+              </div>
+              <div className="editProductItem">
+                <label>Color</label>
+                <input type="text" placeholder={product.color} />
+              </div>
+              <div className="editProductItem">
+                <label>In Stock</label>
+                <select name="inStock" id="idStock">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
             </div>
-            <div className="editProductItem">
-              <label>Product Description</label>
-              <input type="text" placeholder={product.desc} />
-            </div>
-            <div className="editProductItem">
-              <label>Price</label>
-              <input type="text" placeholder={product.price} />
-            </div>
-            <div className="editProductItem">
-              <label>Categories</label>
-              <input type="text" placeholder={product.categories} />
-            </div>
-            <div className="editProductItem"></div>
-            <label>Sizes</label>
-            <input type="text" placeholder={product.size} />
-            <div className="editProductItem">
-              <label>Color</label>
-              <input type="text" placeholder={product.color} />
-            </div>
-            <div className="editProductItem">
-              <label>In Stock</label>
-              <select name="inStock" id="idStock">
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </select>
+            <div className="productFormRight">
+              <div className="productUpload">
+                <img src={product.img} alt="" className="productUploadImg" />
+                <label htmlFor="file">{/* <Publish></Publish> */}</label>
+                <input type="file" id="file" />
+              </div>
             </div>
           </div>
-          <div className="productFormRight">
-            <div className="productUpload">
-              <img src={product.img} alt="" className="productUploadImg" />
-              <label htmlFor="file">{/* <Publish></Publish> */}</label>
-              <input type="file" id="file" style={{ display: "none" }} />
-            </div>
+          <div className="productFormBottom">
             <button className="productButton">Update</button>
           </div>
         </form>
