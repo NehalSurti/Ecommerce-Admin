@@ -13,7 +13,7 @@ async function token() {
   try {
     TOKEN = JSON.parse(JSON.parse(localStorage.getItem("persist:root")).user)
       .currentUser.token;
-    console.log(TOKEN);
+    console.log("request method token",TOKEN);
   } catch (err) {
     TOKEN = "";
   }
