@@ -21,6 +21,8 @@ import loader from "./assets/loader.gif";
 import { userRequest } from "./utils/requestMethods";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import OrderList from "./pages/orderlist/OrderList";
+import Order from "./pages/order/Order";
 
 const SidebarLayout = () => (
   <>
@@ -142,6 +144,8 @@ function App() {
               <Route path="/products" element={<ProductList />} />
               <Route path="/product/:productid" element={<Product />} />
               <Route path="/newProduct" element={<NewProduct />} />
+              <Route path="/orders" element={<OrderList />} />
+              <Route path="/order/:orderid" element={<Order />} />
               <Route path="/login" element={<Navigate to="/" />} />
               <Route path="/" element={<Home />} />
             </Route>
