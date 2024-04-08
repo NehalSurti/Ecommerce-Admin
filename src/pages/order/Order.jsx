@@ -3,7 +3,6 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
-import { userRequest } from "../../utils/requestMethods";
 import { updateOrderAsync } from "../../redux/features/order/orderThunks";
 
 export default function Order() {
@@ -18,7 +17,6 @@ export default function Order() {
   const { orders } = useSelector((state) => state.order);
   const { products } = useSelector((state) => state.product);
   const order = orders.find((order) => order._id === orderId);
-  console.log(order.products);
 
   const createdAt = new Date(order.createdAt);
   const day = createdAt.getDate();
@@ -36,20 +34,41 @@ export default function Order() {
         ...product,
         img: orderProduct.img,
         title: orderProduct.title,
-        status: "pending",
       };
     });
     setOrderProducts(updatedOrderProducts);
-  }, [order]);
+  }, [order, products]);
 
-  function handleChange(e) {
-    setUpdatedOrder((prev) => {
-      return { ...prev, [e.target.name]: e.target.value };
+  useEffect(() => {
+    if (order && orderProducts.length > 0) {
+      const allProductsDelivered = orderProducts.every(
+        (product) => product.status === "delivered"
+      );
+      if (allProductsDelivered) {
+        setUpdatedOrder((prev) => {
+          return { ...prev, status: "delivered", products: [...orderProducts] };
+        });
+      }
+    }
+  }, [orderProducts]);
+
+  function handleChange(productId, status) {
+    setOrderProducts((prevProducts) => {
+      const updatedProducts = prevProducts.map((product) => {
+        if (product.productId === productId) {
+          return {
+            ...product,
+            status: status,
+          };
+        } else {
+          return product;
+        }
+      });
+      return updatedProducts;
     });
   }
 
-  function handleClick(e) {
-    e.preventDefault();
+  function handleClick() {
     dispatch(
       updateOrderAsync({
         id: orderId,
@@ -57,11 +76,9 @@ export default function Order() {
       })
     )
       .then(() => {
-        // Dispatch successful, show success popup
         setShowSuccessPopup(true);
       })
       .catch((error) => {
-        // Handle dispatch error
         console.error("Error adding product:", error);
       });
   }
@@ -73,7 +90,10 @@ export default function Order() {
       width: 200,
       renderCell: (params) => {
         return (
-          <div className="orderProductItem">
+          <div
+            onClick={() => navigate(`/product/${params.row.productId}`)}
+            className="orderProductItem"
+          >
             {params.row.productId}
           </div>
         );
@@ -82,7 +102,7 @@ export default function Order() {
     {
       field: "product",
       headerName: "Product",
-      width: 300,
+      width: 350,
       renderCell: (params) => {
         return (
           <div className="orderProductItem">
@@ -94,8 +114,17 @@ export default function Order() {
     },
     { field: "quantity", headerName: "Quantity", width: 100 },
     { field: "color", headerName: "Color", width: 100 },
-    { field: "size", headerName: "Size", width: 100 },
-    { field: "price", headerName: "Price", width: 150 },
+    { field: "size", headerName: "Size", width: 80 },
+    { field: "price", headerName: "Price", width: 100 },
+    {
+      field: "TotalPrice",
+      headerName: "Total Price",
+      width: 100,
+      valueGetter: (params) => {
+        const totalPrice = params.row.quantity * params.row.price;
+        return totalPrice;
+      },
+    },
     {
       field: "status",
       headerName: "Status",
@@ -106,8 +135,11 @@ export default function Order() {
             <select
               name="status"
               id="status"
-              onChange={handleChange}
+              onChange={(e) =>
+                handleChange(params.row.productId, e.target.value)
+              }
               value={params.row.status}
+              className={params.row.status === "delivered" ? "delivered" : ""}
             >
               <option value="pending">Pending</option>
               <option value="delivered">Delivered</option>
@@ -153,11 +185,22 @@ export default function Order() {
           </div>
           <div className="orderInfoItem">
             <span className="orderInfoKey">Status:</span>
-            <span className="orderInfoValue">{order.status}</span>
+            <span
+              className={`orderInfoValue orderInfoStatus ${
+                order.status === "delivered" ? "delivered" : ""
+              }`}
+            >
+              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            </span>
           </div>
           <div className="orderInfoItem">
             <span className="orderInfoKey">Date:</span>
             <span className="orderInfoValue">{formattedDate}</span>
+          </div>
+          <div className="updateOrderBottom">
+            <button onClick={handleClick} className="orderButton">
+              Update Status
+            </button>
           </div>
         </div>
       </div>

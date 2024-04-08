@@ -46,8 +46,8 @@ export default function OrderList() {
         return params.row.address.Name;
       },
     },
-    { field: "_id", headerName: "OrderID", width: 250 },
-    { field: "userId", headerName: "UserID", width: 250 },
+    { field: "_id", headerName: "OrderID", width: 200 },
+    { field: "userId", headerName: "UserID", width: 200 },
     { field: "amounts", headerName: "Amount", width: 100 },
     {
       field: "address",
@@ -58,9 +58,7 @@ export default function OrderList() {
           <>
             <div className="addressContainer">
               <ul className="addressElementLists">
-                <li className="addressElementList">
-                  {params.row.address.Add}
-                </li>
+                <li className="addressElementList">{params.row.address.Add}</li>
                 <li className="addressElementList">
                   {params.row.address.Country}
                 </li>
@@ -99,6 +97,7 @@ export default function OrderList() {
   return (
     <div className="orderList">
       <DataGrid
+        className="orderListDataGrid"
         rows={orders}
         columns={columns}
         getRowHeight={() => "auto"}
