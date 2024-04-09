@@ -1,13 +1,15 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk } from "@reduxjs/toolkit";
 import { publicRequest, userRequest } from "../../../utils/requestMethods";
 
-export const loginAsync = createAsyncThunk(
-    'user/login',
-    async (user) => {
-      const response = await publicRequest.post('/auth/login', user);
-      return response.data;
-    }
-  );
+export const registerAsync = createAsyncThunk("user/register", async (user) => {
+  const response = await publicRequest.post("/auth/register", user);
+  return response.data ? true : false;
+});
+
+export const loginAsync = createAsyncThunk("user/login", async (user) => {
+  const response = await publicRequest.post("/auth/login", user);
+  return response.data;
+});
 
 export const getAllUsersAsync = createAsyncThunk(
   "user/getAllUsers",
@@ -17,13 +19,10 @@ export const getAllUsersAsync = createAsyncThunk(
   }
 );
 
-export const getUserAsync = createAsyncThunk(
-  "user/getUser",
-  async (id) => {
-    const response = await userRequest.get(`/users/find/${id}`);
-    return response.data;
-  }
-);
+export const getUserAsync = createAsyncThunk("user/getUser", async (id) => {
+  const response = await userRequest.get(`/users/find/${id}`);
+  return response.data;
+});
 
 export const deleteUserAsync = createAsyncThunk(
   "user/deleteUser",
@@ -36,11 +35,8 @@ export const deleteUserAsync = createAsyncThunk(
 export const updateUserAsync = createAsyncThunk(
   "user/updateUser",
   async ({ id, userUpdate }) => {
-    const response = await userRequest.patch(
-      `/users/${id}`,
-      userUpdate
-    );
-    return {id, user : response.data};
+    const response = await userRequest.patch(`/users/${id}`, userUpdate);
+    return { id, user: response.data };
   }
 );
 

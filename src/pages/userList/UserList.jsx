@@ -16,7 +16,7 @@ export default function UserList() {
 
   useEffect(() => {
     dispatch(getAllUsersAsync());
-  }, []);
+  }, [users]);
 
   const handleDelete = (id) => {
     dispatch(deleteUserAsync(id));

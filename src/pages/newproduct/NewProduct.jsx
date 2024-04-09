@@ -7,8 +7,13 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import app from "../../firebase";
-import { addProductAsync } from "../../redux/features/product/productThunks";
+import {
+  addProductAsync,
+  getProductsAsync,
+} from "../../redux/features/product/productThunks";
 import { useDispatch, useSelector } from "react-redux";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function NewProduct() {
   const [inputs, setInputs] = useState({});
@@ -19,26 +24,78 @@ export default function NewProduct() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const dispatch = useDispatch();
 
+  const toastOptions = {
+    position: "bottom-right",
+    autoClose: 5000,
+    pauseOnHover: true,
+    draggable: true,
+    theme: "light",
+  };
+
+  function handleInputValidation(name, value) {
+    if (name === "title" || name === "desc") {
+      // Sanitize title and description by removing HTML tags and trimming white spaces
+      value = value.replace(/(<([^>]+)>)/gi, "").trim();
+      return value;
+    } else if (name === "price") {
+      // Sanitize price by allowing only numbers and dots
+      value = value.replace(/[^\d.]/g, "").trim();
+      return value;
+    } else if (name === "inStock") {
+      // Sanitize inStock by converting it to boolean
+      return value === "true" ? true : false;
+      // return value;
+    } else if (name === "categories" || name === "color" || name === "size") {
+      // Sanitize categories, color, and size by splitting and trimming white spaces
+      value = value.split(",").map((item) => item.trim());
+      return value;
+    }
+  }
+
   function handleChange(e) {
+    // const name = e.target.name;
+    // let value = e.target.value;
+    const value = handleInputValidation(e.target.name, e.target.value);
     setInputs((prev) => {
-      return { ...prev, [e.target.name]: e.target.value };
+      return { ...prev, [e.target.name]: value };
     });
   }
 
   function handleCategories(e) {
-    setCat(e.target.value.split(","));
+    const value = handleInputValidation(e.target.name, e.target.value);
+    setCat(value);
   }
 
   function handleColors(e) {
-    setColor(e.target.value.split(","));
+    const value = handleInputValidation(e.target.name, e.target.value);
+    setColor(value);
   }
 
   function handleSizes(e) {
-    setSizes(e.target.value.split(","));
+    const value = handleInputValidation(e.target.name, e.target.value);
+    setSizes(value);
   }
 
   function handleClick(e) {
     e.preventDefault();
+
+    const requiredFields = ["title", "desc", "price", "inStock"];
+    const isAnyFieldEmpty = requiredFields.some((field) => {
+      const value = inputs[field];
+      return value === undefined || value === null || value === "";
+    });
+
+    if (
+      isAnyFieldEmpty ||
+      !file ||
+      cat.length === 0 ||
+      color.length === 0 ||
+      sizes.length === 0
+    ) {
+      toast.error("Please fill all fields!", toastOptions);
+      return;
+    }
+
     const fileName = new Date().getTime() + file.name;
     const storage = getStorage(app);
     const storageRef = ref(storage, fileName);
@@ -95,6 +152,7 @@ export default function NewProduct() {
               setColor([]);
               setSizes([]);
               document.getElementById("file").value = null;
+              dispatch(getProductsAsync());
             })
             .catch((error) => {
               // Handle dispatch error
@@ -106,98 +164,104 @@ export default function NewProduct() {
   }
 
   return (
-    <div className="newProduct">
-      <h1 className="addProductTitle">New Product</h1>
-      <form className="addProductForm">
-        <div className="formPartOne">
-          <div className="addProductImageItem">
-            <label>Image</label>
-            <input
-              type="file"
-              id="file"
-              // value={file}
-              onChange={(e) => setFile(e.target.files[0])}
-            />
+    <>
+      <div className="newProduct">
+        <h1 className="addProductTitle">New Product</h1>
+        <form className="addProductForm">
+          <div className="formPartOne">
+            <div className="addProductImageItem">
+              <label>Image</label>
+              <input
+                type="file"
+                id="file"
+                // value={file}
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+            </div>
           </div>
-        </div>
-        <div className="formPartTwo">
-          <div className="addProductItem">
-            <label>Title</label>
-            <input
-              name="title"
-              type="text"
-              value={inputs.title || ""}
-              placeholder="Enter title"
-              onChange={handleChange}
-            />
+          <div className="formPartTwo">
+            <div className="addProductItem">
+              <label>Title</label>
+              <input
+                name="title"
+                type="text"
+                value={inputs.title || ""}
+                placeholder="Enter title"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="addProductItem">
+              <label>Description</label>
+              <input
+                name="desc"
+                type="text"
+                value={inputs.desc || ""}
+                placeholder="Enter description"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="addProductItem">
+              <label>Price</label>
+              <input
+                name="price"
+                type="number"
+                value={inputs.price || ""}
+                placeholder="Enter Price"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="addProductItem">
+              <label>Categories</label>
+              <input
+                name="categories"
+                type="text"
+                value={cat}
+                placeholder="Jeans, Skirts.."
+                onChange={handleCategories}
+              />
+            </div>
+            <div className="addProductItem">
+              <label>Sizes</label>
+              <input
+                name="size"
+                type="text"
+                value={sizes}
+                placeholder="S, M.."
+                onChange={handleSizes}
+              />
+            </div>
+            <div className="addProductItem">
+              <label>Color</label>
+              <input
+                name="color"
+                type="text"
+                value={color}
+                placeholder="Red, Blue.."
+                onChange={handleColors}
+              />
+            </div>
+            <div className="addProductItem">
+              <label>Stock</label>
+              <select name="inStock" onChange={handleChange}>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
           </div>
-          <div className="addProductItem">
-            <label>Description</label>
-            <input
-              name="desc"
-              type="text"
-              value={inputs.desc  || ""}
-              placeholder="Enter description"
-              onChange={handleChange}
-            />
+          <div className="formPartThree">
+            <button onClick={handleClick} className="addProductButton">
+              Create
+            </button>
           </div>
-          <div className="addProductItem">
-            <label>Price</label>
-            <input
-              name="price"
-              type="number"
-              value={inputs.price  || ""}
-              placeholder="Enter Price"
-              onChange={handleChange}
-            />
+        </form>
+        {showSuccessPopup && (
+          <div className="successPopup">
+            <p>Product added successfully!</p>
+            <button onClick={() => setShowSuccessPopup(false)}>Close</button>
           </div>
-          <div className="addProductItem">
-            <label>Categories</label>
-            <input
-              type="text"
-              value={cat}
-              placeholder="Jeans, Skirts.."
-              onChange={handleCategories}
-            />
-          </div>
-          <div className="addProductItem">
-            <label>Sizes</label>
-            <input
-              type="text"
-              value={sizes}
-              placeholder="S, M.."
-              onChange={handleSizes}
-            />
-          </div>
-          <div className="addProductItem">
-            <label>Color</label>
-            <input
-              type="text"
-              value={color}
-              placeholder="Red, Blue.."
-              onChange={handleColors}
-            />
-          </div>
-          <div className="addProductItem">
-            <label>Stock</label>
-            <select name="inStock" onChange={handleChange}>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-          </div>
-        </div>
-        <div className="formPartThree">
-          <button onClick={handleClick} className="addProductButton">
-            Create
-          </button>
-        </div>
-      </form>
-      {showSuccessPopup && (
-        <div className="successPopup">
-          <p>Product added successfully!</p>
-          <button onClick={() => setShowSuccessPopup(false)}>Close</button>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+      <ToastContainer />
+    </>
   );
 }

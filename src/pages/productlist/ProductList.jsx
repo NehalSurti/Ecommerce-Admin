@@ -16,7 +16,7 @@ export default function ProductList() {
 
   useEffect(() => {
     dispatch(getProductsAsync());
-  }, []);
+  }, [products]);
 
   const handleDelete = (id) => {
     dispatch(deleteProductAsync(id));

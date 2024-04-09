@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  registerAsync,
   loginAsync,
   getAllUsersAsync,
   getUserAsync,
@@ -15,6 +16,7 @@ const initialState = {
   userStats: [],
   isFetching: false,
   error: false,
+  registerNewUser: false,
 };
 
 const userSlice = createSlice({
@@ -23,6 +25,18 @@ const userSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(registerAsync.pending, (state) => {
+        state.isFetching = true;
+      })
+      .addCase(registerAsync.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.registerNewUser = action.payload;
+        state.error = false;
+      })
+      .addCase(registerAsync.rejected, (state) => {
+        state.isFetching = false;
+        state.error = true;
+      })
       .addCase(loginAsync.pending, (state) => {
         state.isFetching = true;
       })
