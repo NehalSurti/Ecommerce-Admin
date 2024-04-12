@@ -1,19 +1,16 @@
 import { useState } from "react";
 import "./NewProduct.css";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import app from "../../firebase";
-import {
-  addProductAsync,
-  getProductsAsync,
-} from "../../redux/features/product/productThunks";
+import { addProductAsync } from "../../redux/features/product/productThunks";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  handleFileType,
+  handleInputValidation,
+  handleRequiredFields,
+} from "../../services/InputValidation_NewProduct";
+import { toastOptions } from "../../services/ToastOptions";
+import { handleImageUpload } from "../../services/ImageUpload_Firebase";
 
 export default function NewProduct() {
   const [inputs, setInputs] = useState({});
@@ -21,40 +18,12 @@ export default function NewProduct() {
   const [cat, setCat] = useState([]);
   const [color, setColor] = useState([]);
   const [sizes, setSizes] = useState([]);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
 
-  const toastOptions = {
-    position: "bottom-right",
-    autoClose: 5000,
-    pauseOnHover: true,
-    draggable: true,
-    theme: "light",
-  };
-
-  function handleInputValidation(name, value) {
-    if (name === "title" || name === "desc") {
-      // Sanitize title and description by removing HTML tags and trimming white spaces
-      value = value.replace(/(<([^>]+)>)/gi, "").trim();
-      return value;
-    } else if (name === "price") {
-      // Sanitize price by allowing only numbers and dots
-      value = value.replace(/[^\d.]/g, "").trim();
-      return value;
-    } else if (name === "inStock") {
-      // Sanitize inStock by converting it to boolean
-      return value === "true" ? true : false;
-      // return value;
-    } else if (name === "categories" || name === "color" || name === "size") {
-      // Sanitize categories, color, and size by splitting and trimming white spaces
-      value = value.split(",").map((item) => item.trim());
-      return value;
-    }
-  }
+  const { error } = useSelector((state) => state.product);
 
   function handleChange(e) {
-    // const name = e.target.name;
-    // let value = e.target.value;
     const value = handleInputValidation(e.target.name, e.target.value);
     setInputs((prev) => {
       return { ...prev, [e.target.name]: value };
@@ -76,91 +45,58 @@ export default function NewProduct() {
     setSizes(value);
   }
 
-  function handleClick(e) {
+  async function handleClick(e) {
     e.preventDefault();
+    setLoading(true);
 
-    const requiredFields = ["title", "desc", "price", "inStock"];
-    const isAnyFieldEmpty = requiredFields.some((field) => {
-      const value = inputs[field];
-      return value === undefined || value === null || value === "";
-    });
-
-    if (
-      isAnyFieldEmpty ||
-      !file ||
-      cat.length === 0 ||
-      color.length === 0 ||
-      sizes.length === 0
-    ) {
+    if (handleRequiredFields(inputs, file, cat, color, sizes)) {
       toast.error("Please fill all fields!", toastOptions);
+      setLoading(false);
       return;
     }
 
-    const fileName = new Date().getTime() + file.name;
-    const storage = getStorage(app);
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    if (handleFileType(file)) {
+      toast.error("Please upload a PNG or JPEG file.", toastOptions);
+      setLoading(false);
+      return;
+    }
 
-    // Listen for state changes, errors, and completion of the upload.
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
-        switch (snapshot.state) {
-          case "paused":
-            console.log("Upload is paused");
-            break;
-          case "running":
-            console.log("Upload is running");
-            break;
-        }
-      },
-      (error) => {
-        switch (error.code) {
-          case "storage/unauthorized":
-            console.log("User doesn't have permission to access the object");
-            break;
-          case "storage/canceled":
-            console.log("User canceled the upload");
-            break;
-          case "storage/unknown":
-            console.log("Unknown error occurred, inspect error.serverResponse");
-            break;
-        }
-      },
-      () => {
-        // Upload completed successfully, now we can get the download URL
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          const product = {
-            ...inputs,
-            img: downloadURL,
-            categories: cat,
-            color: color,
-            size: sizes,
-          };
-          dispatch(addProductAsync(product))
-            .then(() => {
-              // Dispatch successful, show success popup
-              setShowSuccessPopup(true);
-              // Reset form
-              setInputs({});
-              setFile(null);
-              setCat([]);
-              setColor([]);
-              setSizes([]);
-              document.getElementById("file").value = null;
-              dispatch(getProductsAsync());
-            })
-            .catch((error) => {
-              // Handle dispatch error
-              console.error("Error adding product:", error);
-            });
+    try {
+      const downloadURL = await handleImageUpload(file);
+
+      const product = {
+        ...inputs,
+        img: downloadURL,
+        categories: cat,
+        color: color,
+        size: sizes,
+      };
+
+      dispatch(addProductAsync(product))
+        .then(() => {
+          if (error === false) {
+            setLoading(false);
+            // Reset form
+            setInputs({});
+            setFile(null);
+            setCat([]);
+            setColor([]);
+            setSizes([]);
+            document.getElementById("file").value = null;
+            toast.success("Product added successfully!", toastOptions);
+          } else {
+            setLoading(false);
+            toast.error("Error adding product", toastOptions);
+          }
+        })
+        .catch((error) => {
+          setLoading(false);
+          toast.error("Error adding product", toastOptions);
         });
-      }
-    );
+    } catch (error) {
+      setLoading(false);
+      toast.error(error, toastOptions);
+    }
   }
 
   return (
@@ -242,7 +178,11 @@ export default function NewProduct() {
             </div>
             <div className="addProductItem">
               <label>Stock</label>
-              <select name="inStock" onChange={handleChange}>
+              <select
+                name="inStock"
+                onChange={handleChange}
+                value={inputs.inStock ? "true" : "false"}
+              >
                 <option value="true">Yes</option>
                 <option value="false">No</option>
               </select>
@@ -254,12 +194,7 @@ export default function NewProduct() {
             </button>
           </div>
         </form>
-        {showSuccessPopup && (
-          <div className="successPopup">
-            <p>Product added successfully!</p>
-            <button onClick={() => setShowSuccessPopup(false)}>Close</button>
-          </div>
-        )}
+        {loading && <div className="loadingIndicator"></div>}
       </div>
       <ToastContainer />
     </>

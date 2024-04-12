@@ -45,3 +45,11 @@ export const getMonthlyIncomeAsync = createAsyncThunk(
     return response.data;
   }
 );
+
+export const getMonthlyIncomeforProductAsync = createAsyncThunk(
+  "order/getMonthlyIncomeforProduct",
+  async (id) => {
+    const response = await userRequest.get(`/orders/income/${id}`);
+    return response.data;
+  }
+);

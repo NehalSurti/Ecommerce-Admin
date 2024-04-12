@@ -20,11 +20,8 @@ export const deleteProductAsync = createAsyncThunk(
 export const updateProductAsync = createAsyncThunk(
   "product/updateProduct",
   async ({ id, productUpdate }) => {
-    const response = await userRequest.patch(
-      `/products/${id}`,
-      productUpdate
-    );
-    return {id, product : response.data};
+    const response = await userRequest.patch(`/products/${id}`, productUpdate);
+    return { id, product: response.data };
   }
 );
 

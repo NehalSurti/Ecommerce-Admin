@@ -6,12 +6,15 @@ import {
   updateOrderAsync,
   addOrderAsync,
   getMonthlyIncomeAsync,
+  getMonthlyIncomeforProductAsync,
 } from "./orderThunks";
 
 const initialState = {
   orders: [],
   isFetching: false,
   error: false,
+  monthlyIncome: [],
+  MonthlyIncomeforProduct: [],
 };
 
 const orderSlice = createSlice({
@@ -91,9 +94,21 @@ const orderSlice = createSlice({
       })
       .addCase(getMonthlyIncomeAsync.fulfilled, (state, action) => {
         state.isFetching = false;
-        state.orders = action.payload;
+        state.monthlyIncome = action.payload;
       })
       .addCase(getMonthlyIncomeAsync.rejected, (state) => {
+        state.isFetching = false;
+        state.error = true;
+      })
+      .addCase(getMonthlyIncomeforProductAsync.pending, (state) => {
+        state.isFetching = true;
+        state.error = false;
+      })
+      .addCase(getMonthlyIncomeforProductAsync.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.MonthlyIncomeforProduct = action.payload;
+      })
+      .addCase(getMonthlyIncomeforProductAsync.rejected, (state) => {
         state.isFetching = false;
         state.error = true;
       });

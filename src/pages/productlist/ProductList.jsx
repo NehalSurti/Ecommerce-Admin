@@ -2,7 +2,7 @@ import "./ProductList.css";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getProductsAsync,
@@ -16,7 +16,7 @@ export default function ProductList() {
 
   useEffect(() => {
     dispatch(getProductsAsync());
-  }, [products]);
+  }, []);
 
   const handleDelete = (id) => {
     dispatch(deleteProductAsync(id));
@@ -40,7 +40,14 @@ export default function ProductList() {
     { field: "categories", headerName: "Categories", width: 100 },
     { field: "size", headerName: "Size", width: 100 },
     { field: "color", headerName: "Color", width: 100 },
-    { field: "inStock", headerName: "Stock", width: 100 },
+    {
+      field: "inStock",
+      headerName: "Stock",
+      width: 100,
+      valueGetter: (params) => {
+        return params.row.inStock ? "True" : "False";
+      },
+    },
     {
       field: "price",
       headerName: "Price",

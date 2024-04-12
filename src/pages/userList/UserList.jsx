@@ -2,7 +2,7 @@ import "./UserList.css";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getAllUsersAsync,
@@ -16,7 +16,7 @@ export default function UserList() {
 
   useEffect(() => {
     dispatch(getAllUsersAsync());
-  }, [users]);
+  }, []);
 
   const handleDelete = (id) => {
     dispatch(deleteUserAsync(id));

@@ -1,21 +1,22 @@
 import "./Product.css";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Chart from "../../components/chart/Chart";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useMemo, useEffect } from "react";
-import { userRequest } from "../../utils/requestMethods";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from "firebase/storage";
-import app from "../../firebase";
 import { updateProductAsync } from "../../redux/features/product/productThunks";
+import {
+  handleFileType,
+  handleInputValidation,
+  handleRequiredFields,
+} from "../../services/InputValidation_Product";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toastOptions } from "../../services/ToastOptions";
+import { handleImageUpload } from "../../services/ImageDelete&Upload_Firebase";
+import { getMonthlyIncomeforProductAsync } from "../../redux/features/order/orderThunks";
 
 export default function Product() {
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
   const [inputs, setInputs] = useState({});
   const [file, setFile] = useState(null);
@@ -23,33 +24,15 @@ export default function Product() {
   const [color, setColor] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [image, setImage] = useState(null);
-  // const [prevImage, setPrevImage] = useState({ image: null, prevImage: null });
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [pStats, setPStats] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const productId = location.pathname.split("/")[2];
-  const dispatch = useDispatch();
-  const [pStats, setPStats] = useState([]);
-  const uniqueNamesSet = new Set();
-
-  const { products } = useSelector((state) => state.product);
+  const { MonthlyIncomeforProduct } = useSelector((state) => state.order);
+  const { products, error } = useSelector((state) => state.product);
   const product = products.find((product) => product._id === productId);
 
-  useEffect(() => {
-    setInputs({
-      title: product?.title || "",
-      desc: product?.desc || "",
-      price: product?.price || "",
-      inStock: product?.inStock || "",
-    });
-    setCat(product?.categories || []);
-    setColor(product?.color || []);
-    setSizes(product?.size || []);
-    setImage(product?.img || null);
-    // setPrevImage((prev) => {
-    //   return { ...prev, image: product?.img || null, prevImage: prev.image };
-    // });
-  }, [product]);
-
+  const uniqueNamesSet = new Set();
   const MONTHS = useMemo(
     () => [
       "Jan",
@@ -69,130 +52,124 @@ export default function Product() {
   );
 
   useEffect(() => {
-    const getStats = async () => {
-      try {
-        const res = await userRequest.get("/orders/income?pid=" + productId);
-        const list = res.data.sort((a, b) => {
-          return a._id - b._id;
-        });
-        list.map((item) => {
-          if (uniqueNamesSet.has(item._id)) {
-          } else {
-            setPStats((prev) => [
-              ...prev,
-              {
-                name: MONTHS[item._id - 1],
+    dispatch(getMonthlyIncomeforProductAsync(productId));
+  }, []);
+
+  useEffect(() => {
+    setInputs({
+      title: product?.title || "",
+      desc: product?.desc || "",
+      price: product?.price || "",
+      inStock: product?.inStock || "",
+    });
+    setCat(product?.categories || []);
+    setColor(product?.color || []);
+    setSizes(product?.size || []);
+    setImage(product?.img || null);
+  }, [product]);
+
+  useEffect(() => {
+    if (MonthlyIncomeforProduct && MonthlyIncomeforProduct.length > 0) {
+      const getStats = () => {
+        try {
+          const list = MonthlyIncomeforProduct[0].monthlySales
+            .slice()
+            .sort((a, b) => a.month - b.month);
+          const updatedStats = [];
+
+          list.forEach((item) => {
+            if (!uniqueNamesSet.has(item.month)) {
+              updatedStats.push({
+                name: MONTHS[item.month - 1],
                 Sales: item.total,
-              },
-            ]);
-            uniqueNamesSet.add(item._id);
-          }
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    getStats();
-  }, [MONTHS]); // TODO cHECK THE SALES PERFORMANCE CHART
+              });
+              uniqueNamesSet.add(item.month);
+            }
+          });
+
+          setPStats(updatedStats);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      getStats();
+    }
+  }, [MonthlyIncomeforProduct, MONTHS]);
 
   function handleChange(e) {
+    const value = handleInputValidation(e.target.name, e.target.value);
     setInputs((prev) => {
-      return { ...prev, [e.target.name]: e.target.value };
+      return { ...prev, [e.target.name]: value };
     });
   }
 
   function handleCategories(e) {
-    setCat(e.target.value.split(","));
+    const value = handleInputValidation(e.target.name, e.target.value);
+    setCat(value);
   }
 
   function handleColors(e) {
-    setColor(e.target.value.split(","));
+    const value = handleInputValidation(e.target.name, e.target.value);
+    setColor(value);
   }
 
   function handleSizes(e) {
-    setSizes(e.target.value.split(","));
+    const value = handleInputValidation(e.target.name, e.target.value);
+    setSizes(value);
   }
 
-  function handleClick(e) {
+  async function handleClick(e) {
     e.preventDefault();
+    setLoading(true);
+
+    if (handleRequiredFields(inputs, cat, color, sizes)) {
+      toast.error("Please fill all fields!", toastOptions);
+      setLoading(false);
+      return;
+    }
 
     if (file !== null) {
-      const fileName = new Date().getTime() + file.name;
-      const storage = getStorage(app);
-      const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-      // Create a reference to the file to delete
-      const desertRef = ref(storage, image);
-      // Listen for state changes, errors, and completion of the upload.
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Upload is " + progress + "% done");
-          switch (snapshot.state) {
-            case "paused":
-              console.log("Upload is paused");
-              break;
-            case "running":
-              console.log("Upload is running");
-              break;
-          }
-        },
-        (error) => {
-          switch (error.code) {
-            case "storage/unauthorized":
-              console.log("User doesn't have permission to access the object");
-              break;
-            case "storage/canceled":
-              console.log("User canceled the upload");
-              break;
-            case "storage/unknown":
-              console.log(
-                "Unknown error occurred, inspect error.serverResponse"
-              );
-              break;
-          }
-        },
-        () => {
-          // Upload completed successfully, now we can get the download URL
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            const updatedProduct = {
-              ...inputs,
-              img: downloadURL,
-              categories: cat,
-              color: color,
-              size: sizes,
-            };
+      if (handleFileType(file)) {
+        toast.error("Please upload a PNG or JPEG file.", toastOptions);
+        setLoading(false);
+        return;
+      }
 
-            // Delete the file
-            deleteObject(desertRef)
-              .then(() => {
-                console.log("File deleted successfully");
-              })
-              .catch((error) => {
-                console.log("Error deleting product:", error);
-              });
+      try {
+        const downloadURL = await handleImageUpload(file, image);
 
-            dispatch(
-              updateProductAsync({
-                id: productId,
-                productUpdate: updatedProduct,
-              })
-            )
-              .then(() => {
-                // Dispatch successful, show success popup
-                setShowSuccessPopup(true);
-                document.getElementById("file").value = null;
-              })
-              .catch((error) => {
-                // Handle dispatch error
-                console.error("Error adding product:", error);
-              });
+        const updatedProduct = {
+          ...inputs,
+          img: downloadURL,
+          categories: cat,
+          color: color,
+          size: sizes,
+        };
+
+        dispatch(
+          updateProductAsync({
+            id: productId,
+            productUpdate: updatedProduct,
+          })
+        )
+          .then(() => {
+            if (error === false) {
+              setLoading(false);
+              document.getElementById("file").value = null;
+              toast.success("Product updated successfully!", toastOptions);
+            } else {
+              setLoading(false);
+              toast.error("Error updating product", toastOptions);
+            }
+          })
+          .catch((error) => {
+            setLoading(false);
+            toast.error("Error updating product", toastOptions);
           });
-        }
-      );
+      } catch (error) {
+        setLoading(false);
+        toast.error(error, toastOptions);
+      }
     } else {
       const updatedProduct = {
         ...inputs,
@@ -208,152 +185,169 @@ export default function Product() {
         })
       )
         .then(() => {
-          // Dispatch successful, show success popup
-          setShowSuccessPopup(true);
+          if (error === false) {
+            setLoading(false);
+            document.getElementById("file").value = null;
+            toast.success("Product updated successfully!", toastOptions);
+          } else {
+            setLoading(false);
+            toast.error("Error updating product", toastOptions);
+          }
         })
         .catch((error) => {
-          // Handle dispatch error
-          console.error("Error adding product:", error);
+          setLoading(false);
+          toast.error("Error updating product", toastOptions);
         });
     }
   }
 
   return (
-    <div className="product">
-      <div className="productTitleContainer">
-        <h1 className="productTitle">Product</h1>
-      </div>
-      <div className="productTop">
-        <div className="productTopLeft">
-          <Chart
-            data={pStats}
-            dataKey="Sales"
-            title="Sales Performance"
-            grid
-          ></Chart>
+    <>
+      <div className="product">
+        <div className="productTitleContainer">
+          <h1 className="productTitle">Product</h1>
         </div>
-        <div className="productTopRight">
-          <div className="productInfoTop">
-            <img src={image} alt="" className="productInfoImg" />
-            <span className="productName">{product.title}</span>
+        <div className="productTop">
+          <div className="productTopLeft">
+            <Chart
+              data={pStats}
+              dataKey="Sales"
+              title="Sales Performance"
+              grid
+            ></Chart>
           </div>
-          <div className="productInfoBottom">
-            <div className="productInfoItem">
-              <span className="productInfoKey">Id:</span>
-              <span className="productInfoValue">{product._id}</span>
+          <div className="productTopRight">
+            <div className="productInfoTop">
+              <img src={image} alt="" className="productInfoImg" />
+              <span className="productName">{product.title}</span>
             </div>
-            <div className="productInfoItem">
-              <span className="productInfoKey">Sales:</span>
-              <span className="productInfoValue">5123</span>
-            </div>
-            <div className="productInfoItem">
-              <span className="productInfoKey">In stock:</span>
-              <span className="productInfoValue">
-                {product.inStock ? "True" : "False"}
-              </span>
+            <div className="productInfoBottom">
+              <div className="productInfoItem">
+                <span className="productInfoKey">Id:</span>
+                <span className="productInfoValue">{product._id}</span>
+              </div>
+              <div className="productInfoItem">
+                <span className="productInfoKey">Sales:</span>
+                <span className="productInfoValue">
+                  {MonthlyIncomeforProduct && MonthlyIncomeforProduct[0]
+                    ? MonthlyIncomeforProduct[0].totalSales
+                    : 0}
+                </span>
+              </div>
+              <div className="productInfoItem">
+                <span className="productInfoKey">In stock:</span>
+                <span className="productInfoValue">
+                  {product.inStock ? "True" : "False"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="productBottom">
-        <form className="productForm">
-          <div className="productFormTop">
-            <div className="productFormLeft">
-              <div className="editProductItem">
-                <label>Product Name</label>
-                <input
-                  type="text"
-                  name="title"
-                  onChange={handleChange}
-                  value={inputs.title}
-                  placeholder={product.title}
-                />
+        <div className="productBottom">
+          <form className="productForm">
+            <div className="productFormTop">
+              <div className="productFormLeft">
+                <div className="editProductItem">
+                  <label>Product Name</label>
+                  <input
+                    type="text"
+                    name="title"
+                    onChange={handleChange}
+                    value={inputs.title}
+                    placeholder={product.title}
+                  />
+                </div>
+                <div className="editProductItem">
+                  <label>Product Description</label>
+                  <input
+                    type="text"
+                    name="desc"
+                    onChange={handleChange}
+                    value={inputs.desc}
+                    placeholder={product.desc}
+                  />
+                </div>
+                <div className="editProductItem">
+                  <label>Price</label>
+                  <input
+                    type="number"
+                    name="price"
+                    onChange={handleChange}
+                    value={inputs.price}
+                    placeholder={product.price}
+                  />
+                </div>
+                <div className="editProductItem">
+                  <label>Categories</label>
+                  <input
+                    name="categories"
+                    type="text"
+                    onChange={handleCategories}
+                    value={cat}
+                    placeholder={product.categories}
+                  />
+                </div>
+                <div className="editProductItem">
+                  <label>Sizes</label>
+                  <input
+                    name="size"
+                    type="text"
+                    onChange={handleSizes}
+                    value={sizes}
+                    placeholder={product.size}
+                  />
+                </div>
+                <div className="editProductItem">
+                  <label>Color</label>
+                  <input
+                    name="color"
+                    type="text"
+                    onChange={handleColors}
+                    value={color}
+                    placeholder={product.color}
+                  />
+                </div>
+                <div className="editProductItem">
+                  <label>In Stock</label>
+                  <select
+                    name="inStock"
+                    id="idStock"
+                    onChange={handleChange}
+                    value={inputs.inStock ? "true" : "false"}
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
               </div>
-              <div className="editProductItem">
-                <label>Product Description</label>
-                <input
-                  type="text"
-                  name="desc"
-                  onChange={handleChange}
-                  value={inputs.desc}
-                  placeholder={product.desc}
-                />
-              </div>
-              <div className="editProductItem">
-                <label>Price</label>
-                <input
-                  type="number"
-                  name="price"
-                  onChange={handleChange}
-                  value={inputs.price}
-                  placeholder={product.price}
-                />
-              </div>
-              <div className="editProductItem">
-                <label>Categories</label>
-                <input
-                  type="text"
-                  onChange={handleCategories}
-                  value={cat}
-                  placeholder={product.categories}
-                />
-              </div>
-              <div className="editProductItem">
-                <label>Sizes</label>
-                <input
-                  type="text"
-                  onChange={handleSizes}
-                  value={sizes}
-                  placeholder={product.size}
-                />
-              </div>
-              <div className="editProductItem">
-                <label>Color</label>
-                <input
-                  type="text"
-                  onChange={handleColors}
-                  value={color}
-                  placeholder={product.color}
-                />
-              </div>
-              <div className="editProductItem">
-                <label>In Stock</label>
-                <select
-                  name="inStock"
-                  id="idStock"
-                  onChange={handleChange}
-                  value={inputs.inStock}
-                >
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
+              <div className="productFormRight">
+                <div className="productUpload">
+                  {image ? (
+                    <>
+                      <img src={image} alt="" className="productUploadImg" />
+                      <label htmlFor="file"></label>
+                      <input
+                        type="file"
+                        id="file"
+                        onChange={(e) => setFile(e.target.files[0])}
+                      />
+                    </>
+                  ) : (
+                    <div className="placeholderImage">Loading...</div>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="productFormRight">
-              <div className="productUpload">
-                <img src={image} alt="" className="productUploadImg" />
-                <label htmlFor="file">{/* <Publish></Publish> */}</label>
-                <input
-                  type="file"
-                  id="file"
-                  onChange={(e) => setFile(e.target.files[0])}
-                />
-              </div>
+            <div className="productFormBottom">
+              <button onClick={handleClick} className="productButton">
+                Update
+              </button>
             </div>
-          </div>
-          <div className="productFormBottom">
-            <button onClick={handleClick} className="productButton">
-              Update
-            </button>
-          </div>
-        </form>
-      </div>
-      {showSuccessPopup && (
-        <div className="successPopup">
-          <p>Product edited successfully!</p>
-          <button onClick={() => setShowSuccessPopup(false)}>Close</button>
+          </form>
         </div>
-      )}
-    </div>
+        {loading && <div className="loadingIndicator"></div>}
+      </div>
+      <ToastContainer />
+    </>
   );
 }
