@@ -17,6 +17,13 @@ const initialState = {
   isFetching: false,
   error: false,
   registerNewUser: false,
+  registerError: false,
+  loginError: false,
+  getAllUsersError: false,
+  updateError: false,
+  getUserError: false,
+  deleteUserError: false,
+  getUserStatsError: false,
 };
 
 const userSlice = createSlice({
@@ -27,55 +34,59 @@ const userSlice = createSlice({
     builder
       .addCase(registerAsync.pending, (state) => {
         state.isFetching = true;
+        state.registerError = false;
       })
       .addCase(registerAsync.fulfilled, (state, action) => {
         state.isFetching = false;
         state.registerNewUser = action.payload;
-        state.error = false;
+        state.registerError = false;
       })
       .addCase(registerAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.registerError = true;
       })
       .addCase(loginAsync.pending, (state) => {
         state.isFetching = true;
+        state.loginError = false;
       })
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.isFetching = false;
         state.currentUser = action.payload;
-        state.error = false;
+        state.loginError = false;
       })
       .addCase(loginAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.loginError = true;
       })
       .addCase(getAllUsersAsync.pending, (state) => {
         state.isFetching = true;
-        state.error = false;
+        state.getAllUsersError = false;
       })
       .addCase(getAllUsersAsync.fulfilled, (state, action) => {
         state.isFetching = false;
         state.users = action.payload;
+        state.getAllUsersError = false;
       })
       .addCase(getAllUsersAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.getAllUsersError = true;
       })
       .addCase(getUserAsync.pending, (state) => {
         state.isFetching = true;
-        state.error = false;
+        state.getUserError = false;
       })
       .addCase(getUserAsync.fulfilled, (state, action) => {
         state.isFetching = false;
         state.fetchedUser = action.payload;
+        state.getUserError = false;
       })
       .addCase(getUserAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.getUserError = true;
       })
       .addCase(deleteUserAsync.pending, (state) => {
         state.isFetching = true;
-        state.error = false;
+        state.deleteUserError = false;
       })
       .addCase(deleteUserAsync.fulfilled, (state, action) => {
         state.isFetching = false;
@@ -83,14 +94,15 @@ const userSlice = createSlice({
           state.users.findIndex((item) => item._id === action.payload),
           1
         );
+        state.deleteUserError = false;
       })
       .addCase(deleteUserAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.deleteUserError = true;
       })
       .addCase(updateUserAsync.pending, (state) => {
         state.isFetching = true;
-        state.error = false;
+        state.updateError = false;
       })
       .addCase(updateUserAsync.fulfilled, (state, action) => {
         state.isFetching = false;
@@ -100,19 +112,20 @@ const userSlice = createSlice({
       })
       .addCase(updateUserAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.updateError = true;
       })
       .addCase(getUserStatsAsync.pending, (state) => {
         state.isFetching = true;
-        state.error = false;
+        state.getUserStatsError = false;
       })
       .addCase(getUserStatsAsync.fulfilled, (state, action) => {
         state.isFetching = false;
         state.userStats = action.payload;
+        state.getUserStatsError = false;
       })
       .addCase(getUserStatsAsync.rejected, (state) => {
         state.isFetching = false;
-        state.error = true;
+        state.getUserStatsError = true;
       });
   },
 });

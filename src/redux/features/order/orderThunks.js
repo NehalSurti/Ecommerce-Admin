@@ -1,10 +1,17 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { userRequest } from "../../../utils/requestMethods";
 
-export const getOrdersAsync = createAsyncThunk("order/getOrders", async () => {
-  const response = await userRequest.get("/orders");
-  return response.data;
-});
+export const getOrdersAsync = createAsyncThunk(
+  "order/getOrders",
+  async (queryParam = false) => {
+    let url = "/orders";
+    if (queryParam) {
+      url += "?new=true";
+    }
+    const response = await userRequest.get(url);
+    return response.data;
+  }
+);
 
 export const getUserOrdersAsync = createAsyncThunk(
   "order/getUserOrders",

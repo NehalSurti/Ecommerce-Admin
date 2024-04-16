@@ -71,7 +71,25 @@ export default function OrderList() {
         );
       },
     },
-    { field: "status", headerName: "Status", width: 100 },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 100,
+      renderCell: (params) => {
+        return (
+          <>
+            <span
+              className={`orderListStatus ${
+                params.row.status === "delivered" ? "delivered" : ""
+              }`}
+            >
+              {params.row.status.charAt(0).toUpperCase() +
+                params.row.status.slice(1)}
+            </span>
+          </>
+        );
+      },
+    },
     {
       field: "action",
       headerName: "Action",

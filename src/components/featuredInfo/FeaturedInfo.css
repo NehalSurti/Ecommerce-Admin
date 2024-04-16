@@ -1,7 +1,7 @@
 .featured {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: start;
 }
 
 .featuredItem {
@@ -12,6 +12,7 @@
   cursor: pointer;
   -webkit-box-shadow: 0px 0px 15px -10px rgba(0, 0, 0, 0.75);
   box-shadow: 0px 0px 15px -10px rgba(0, 0, 0, 0.75);
+  max-width: 250px;
 }
 
 .featuredtitle {
@@ -46,6 +47,6 @@
 }
 
 .featuredSub {
-    font-size: 15px;
-    color: gray;
+  font-size: 15px;
+  color: gray;
 }

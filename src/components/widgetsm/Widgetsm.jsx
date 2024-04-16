@@ -1,20 +1,25 @@
 import { useEffect, useState } from "react";
 import "./Widgetsm.css";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { userRequest } from "../../utils/requestMethods";
+import { useDispatch} from "react-redux";
+import { getAllUsersAsync } from "../../redux/features/user/userThunks";
+import { useNavigate } from "react-router-dom";
 
 export default function Widgetsm() {
   const [users, setUsers] = useState([]);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const getUsers = async () => {
+    async function getUsers() {
       try {
-        const res = await userRequest.get("/users?new=true");
-        setUsers(res.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+        const getUsers = await dispatch(getAllUsersAsync(true));
+        if (getUsers.payload) {
+          setUsers(getUsers.payload);
+        } else {
+        }
+      } catch (error) {}
+    }
     getUsers();
   }, []);
 
@@ -22,27 +27,34 @@ export default function Widgetsm() {
     <div className="widgetSm">
       <span className="widgetSmTitle">New Join Members</span>
       <ul className="widgetSmList">
-        {users.map((user) => {
-          return (
-            <li className="widgetSmListItem" key={user._id}>
-              <img
-                src={
-                  user.img ||
-                  "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
-                }
-                alt=""
-                className="widgetSmImg"
-              />
-              <div className="widgetSmUser">
-                <span className="widgetSmUsername">{user.username}</span>
-              </div>
-              <button className="widgetSmButton">
-                <VisibilityIcon className="widgetSmIcon"></VisibilityIcon>
-                Display
-              </button>
-            </li>
-          );
-        })}
+        {users.length !== 0 ? (
+          users.map((user) => {
+            return (
+              <li className="widgetSmListItem" key={user._id}>
+                <img
+                  src={
+                    user.img ||
+                    "https://crowd-literature.eu/wp-content/uploads/2015/01/no-avatar.gif"
+                  }
+                  alt=""
+                  className="widgetSmImg"
+                />
+                <div className="widgetSmUser">
+                  <span className="widgetSmUsername">{user.username}</span>
+                </div>
+                <button
+                  onClick={() => navigate(`/user/${user._id}`)}
+                  className="widgetSmButton"
+                >
+                  <VisibilityIcon className="widgetSmIcon"></VisibilityIcon>
+                  Display
+                </button>
+              </li>
+            );
+          })
+        ) : (
+          <div className="widgetSmListDataNotAvbl">Data Not Available</div>
+        )}
       </ul>
     </div>
   );

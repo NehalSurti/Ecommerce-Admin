@@ -13,8 +13,12 @@ export const loginAsync = createAsyncThunk("user/login", async (user) => {
 
 export const getAllUsersAsync = createAsyncThunk(
   "user/getAllUsers",
-  async () => {
-    const response = await userRequest.get("/users");
+  async (queryParam = false) => {
+    let url = "/users";
+    if (queryParam) {
+      url += "?new=true";
+    }
+    const response = await userRequest.get(url);
     return response.data;
   }
 );

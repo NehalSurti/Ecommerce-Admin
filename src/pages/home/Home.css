@@ -1,8 +1,25 @@
 .home {
-    flex: 4;
+  flex: 4;
+  margin-top: 10px;
+}
+
+.homeCharts {
+  display: flex;
+}
+
+.homeChartsLeft {
+  flex: 1;
+}
+
+.homeChartsLeft .chart {
+  margin-right: 0;
+}
+
+.homeChartsRight {
+  flex: 1;
 }
 
 .homeWidgets {
-    display: flex;
-    margin: 20px;
+  display: flex;
+  margin: 0 20px 20px 20px;
 }

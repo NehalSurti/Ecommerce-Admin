@@ -3,7 +3,13 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
-import { updateOrderAsync } from "../../redux/features/order/orderThunks";
+import {
+  getOrdersAsync,
+  updateOrderAsync,
+} from "../../redux/features/order/orderThunks";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toastOptions } from "../../services/ToastOptions";
 
 export default function Order() {
   const navigate = useNavigate();
@@ -11,18 +17,25 @@ export default function Order() {
   const dispatch = useDispatch();
   const [updatedOrder, setUpdatedOrder] = useState({});
   const [orderProducts, setOrderProducts] = useState([]);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [loading, setLoading] = useState(false);
+  let formattedDate;
 
   const orderId = location.pathname.split("/")[2];
   const { orders } = useSelector((state) => state.order);
   const { products } = useSelector((state) => state.product);
   const order = orders.find((order) => order._id === orderId);
 
-  const createdAt = new Date(order.createdAt);
-  const day = createdAt.getDate();
-  const month = createdAt.getMonth() + 1;
-  const year = createdAt.getFullYear();
-  const formattedDate = `${day}/${month}/${year}`;
+  if (order && order.createdAt) {
+    const createdAt = new Date(order.createdAt);
+    const day = createdAt.getDate();
+    const month = createdAt.getMonth() + 1;
+    const year = createdAt.getFullYear();
+    formattedDate = `${day}/${month}/${year}`;
+  }
+
+  useEffect(() => {
+    dispatch(getOrdersAsync());
+  }, []);
 
   useEffect(() => {
     setUpdatedOrder(order);
@@ -48,6 +61,10 @@ export default function Order() {
         setUpdatedOrder((prev) => {
           return { ...prev, status: "delivered", products: [...orderProducts] };
         });
+      } else {
+        setUpdatedOrder((prev) => {
+          return { ...prev, status: "pending", products: [...orderProducts] };
+        });
       }
     }
   }, [orderProducts]);
@@ -68,19 +85,26 @@ export default function Order() {
     });
   }
 
-  function handleClick() {
-    dispatch(
-      updateOrderAsync({
-        id: orderId,
-        orderUpdate: updatedOrder,
-      })
-    )
-      .then(() => {
-        setShowSuccessPopup(true);
-      })
-      .catch((error) => {
-        console.error("Error adding product:", error);
-      });
+  async function handleClick() {
+    setLoading(true);
+    try {
+      const updOrd = await dispatch(
+        updateOrderAsync({
+          id: orderId,
+          orderUpdate: updatedOrder,
+        })
+      );
+      if (updOrd.payload) {
+        setLoading(false);
+        toast.success("Order updated successfully!", toastOptions);
+      } else {
+        setLoading(false);
+        toast.error("Error updating Order", toastOptions);
+      }
+    } catch (error) {
+      setLoading(false);
+      toast.error("Error updating Order", toastOptions);
+    }
   }
 
   const columns = [
@@ -151,81 +175,92 @@ export default function Order() {
   ];
 
   return (
-    <div className="order">
-      <div className="orderTop">
-        <div className="orderTitleContainer">
-          <h1 className="orderTitle">Order Summary</h1>
-        </div>
-        <div className="orderSummary">
-          <div className="orderInfoItem">
-            <span className="orderInfoKey">Order Id:</span>
-            <span className="orderInfoValue">{order._id}</span>
-          </div>
-          <div className="orderInfoItem">
-            <span className="orderInfoKey">User Id:</span>
-            <span className="orderInfoValue">{order.userId}</span>
-          </div>
-          <div className="orderInfoItem">
-            <span className="orderInfoKey">Address:</span>
-            <div className="orderInfoValue">
-              <ul className="orderAddressElementLists">
-                <li className="orderAddressElementList">{order.address.Add}</li>
-                <li className="orderAddressElementList">
-                  {order.address.Country}
-                </li>
-                <li className="orderAddressElementList">
-                  {order.address.Postcode}
-                </li>
-              </ul>
+    <>
+      <div className="order">
+        {!updatedOrder || !updatedOrder.address ? (
+          <div className="loadingIndicator"></div>
+        ) : (
+          <>
+            <div className="orderTop">
+              <div className="orderTitleContainer">
+                <h1 className="orderTitle">Order Summary</h1>
+              </div>
+              <div className="orderSummary">
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Order Id:</span>
+                  <span className="orderInfoValue">{updatedOrder._id}</span>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">User Id:</span>
+                  <span className="orderInfoValue">{updatedOrder.userId}</span>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Address:</span>
+                  <div className="orderInfoValue">
+                    <ul className="orderAddressElementLists">
+                      <li className="orderAddressElementList">
+                        {updatedOrder.address?.Add}
+                      </li>
+                      <li className="orderAddressElementList">
+                        {updatedOrder.address?.Country}
+                      </li>
+                      <li className="orderAddressElementList">
+                        {updatedOrder.address?.Postcode}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Amount:</span>
+                  <span className="orderInfoValue">{updatedOrder.amounts}</span>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Status:</span>
+                  <span
+                    className={`orderInfoValue orderInfoStatus ${
+                      updatedOrder && updatedOrder.status === "delivered"
+                        ? "delivered"
+                        : ""
+                    }`}
+                  >
+                    {updatedOrder &&
+                      updatedOrder.status &&
+                      updatedOrder.status.charAt(0).toUpperCase() +
+                        updatedOrder.status.slice(1)}
+                  </span>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Date:</span>
+                  <span className="orderInfoValue">{formattedDate}</span>
+                </div>
+                <div className="updateOrderBottom">
+                  <button onClick={handleClick} className="orderButton">
+                    Update Status
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="orderInfoItem">
-            <span className="orderInfoKey">Amount:</span>
-            <span className="orderInfoValue">{order.amounts}</span>
-          </div>
-          <div className="orderInfoItem">
-            <span className="orderInfoKey">Status:</span>
-            <span
-              className={`orderInfoValue orderInfoStatus ${
-                order.status === "delivered" ? "delivered" : ""
-              }`}
-            >
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-            </span>
-          </div>
-          <div className="orderInfoItem">
-            <span className="orderInfoKey">Date:</span>
-            <span className="orderInfoValue">{formattedDate}</span>
-          </div>
-          <div className="updateOrderBottom">
-            <button onClick={handleClick} className="orderButton">
-              Update Status
-            </button>
-          </div>
-        </div>
+            <div className="orderBottom">
+              <DataGrid
+                rows={orderProducts}
+                columns={columns}
+                getRowHeight={() => "auto"}
+                getRowId={(row) => row._id}
+                disableRowSelectionOnClick
+                initialState={{
+                  pagination: {
+                    paginationModel: { page: 0, pageSize: 7 },
+                  },
+                }}
+                pageSizeOptions={[5, 10]}
+                checkboxSelection
+              />
+            </div>
+          </>
+        )}
+        {loading && <div className="loadingIndicator"></div>}
       </div>
-      <div className="orderBottom">
-        <DataGrid
-          rows={orderProducts}
-          columns={columns}
-          getRowHeight={() => "auto"}
-          getRowId={(row) => row._id}
-          disableRowSelectionOnClick
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 7 },
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          checkboxSelection
-        />
-      </div>
-      {showSuccessPopup && (
-        <div className="successPopup">
-          <p>Order status updated!</p>
-          <button onClick={() => setShowSuccessPopup(false)}>Close</button>
-        </div>
-      )}
-    </div>
+      <ToastContainer />
+    </>
   );
 }

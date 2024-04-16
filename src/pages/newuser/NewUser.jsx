@@ -1,19 +1,19 @@
 import "./NewUser.css";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   registerAsync,
   getAllUsersAsync,
 } from "../../redux/features/user/userThunks";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import app from "../../firebase";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  handleFileType,
+  handleRequiredFields,
+  handleValidation,
+} from "../../services/InputValidation_NewUser";
+import { handleImageUpload } from "../../services/ImageUpload_Firebase";
+import { toastOptions } from "../../services/ToastOptions";
 
 export default function NewUser() {
   const dispatch = useDispatch();
@@ -23,17 +23,9 @@ export default function NewUser() {
   const [street, setStreet] = useState("");
   const [country, setCountry] = useState("");
   const [postcode, setPostcode] = useState("");
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  console.log("inputs : ", inputs);
-  const toastOptions = {
-    position: "bottom-right",
-    autoClose: 5000,
-    pauseOnHover: true,
-    draggable: true,
-    theme: "light",
-  };
+  const { registerError } = useSelector((state) => state.user);
 
   function handleChange(e) {
     setInputs((prev) => {
@@ -48,134 +40,66 @@ export default function NewUser() {
     });
   }
 
-  function handleClick(e) {
+  async function handleClick(e) {
     e.preventDefault();
-
-    const requiredFields = [
-      "username",
-      "fullName",
-      "email",
-      "password",
-      "phone",
-      "isAdmin",
-      "status",
-    ];
-    const isAnyFieldEmpty = requiredFields.some((field) => {
-      const value = inputs[field];
-      return value === undefined || value === null || value === "";
-    });
-
-    if (
-      isAnyFieldEmpty ||
-      !file ||
-      street.length === 0 ||
-      country.length === 0 ||
-      postcode.length === 0
-    ) {
-      toast.error("Please fill all fields!", toastOptions);
-      return;
-    }
     setLoading(true);
 
-    if (file !== null) {
-      const fileName = new Date().getTime() + file.name;
-      const storage = getStorage(app);
-      const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+    if (handleRequiredFields(inputs, street, country, postcode, file)) {
+      toast.error("Please fill all fields!", toastOptions);
+      setLoading(false);
+      return;
+    }
 
-      // Listen for state changes, errors, and completion of the upload.
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Upload is " + progress + "% done");
-          switch (snapshot.state) {
-            case "paused":
-              console.log("Upload is paused");
-              break;
-            case "running":
-              console.log("Upload is running");
-              break;
-          }
-        },
-        (error) => {
-          switch (error.code) {
-            case "storage/unauthorized":
-              console.log("User doesn't have permission to access the object");
-              break;
-            case "storage/canceled":
-              console.log("User canceled the upload");
-              break;
-            case "storage/unknown":
-              console.log(
-                "Unknown error occurred, inspect error.serverResponse"
-              );
-              break;
-          }
-        },
-        () => {
-          // Upload completed successfully, now we can get the download URL
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            const registerUser = {
-              ...inputs,
-              img: downloadURL,
-              address: {
-                Add: street,
-                Country: country,
-                Postcode: postcode,
-              },
-            };
+    if (handleFileType(file)) {
+      toast.error("Please upload a PNG or JPEG file.", toastOptions);
+      setLoading(false);
+      return;
+    }
 
-            dispatch(registerAsync(registerUser))
-              .then(() => {
-                // Dispatch successful, show success popup
-                setLoading(false);
-                setShowSuccessPopup(true);
-                setInputs({});
-                setStreet("");
-                setCountry("");
-                setPostcode("");
-                setFile(null);
-                document.getElementById("file").value = null;
-                dispatch(getAllUsersAsync());
-              })
-              .catch((error) => {
-                // Handle dispatch error
-                setLoading(false);
-                console.error("Error adding product:", error);
-              });
-          });
+    const validationCheck = handleValidation(inputs);
+
+    if (validationCheck.check) {
+      try {
+        const downloadURL = await handleImageUpload(file);
+
+        const registerUser = {
+          ...inputs,
+          img: downloadURL,
+          address: {
+            Add: street,
+            Country: country,
+            Postcode: postcode,
+          },
+        };
+
+        try {
+          const regUsr = await dispatch(registerAsync(registerUser));
+
+          if (regUsr.payload) {
+            setLoading(false);
+            setInputs({});
+            setStreet("");
+            setCountry("");
+            setPostcode("");
+            setFile(null);
+            dispatch(getAllUsersAsync());
+            toast.success("User added successfully!", toastOptions);
+          } else {
+            setLoading(false);
+            toast.error("Error adding User", toastOptions);
+          }
+        } catch (error) {
+          setLoading(false);
+          toast.error("Error adding User", toastOptions);
         }
-      );
+      } catch (error) {
+        setFile(null);
+        setLoading(false);
+        toast.error(error, toastOptions);
+      }
     } else {
-      const registerUser = {
-        ...inputs,
-        address: {
-          Add: street,
-          Country: country,
-          Postcode: postcode,
-        },
-      };
-      dispatch(registerAsync(registerUser))
-        .then(() => {
-          // Dispatch successful, show success popup
-          setLoading(false);
-          setShowSuccessPopup(true);
-          setInputs({});
-          setStreet("");
-          setCountry("");
-          setPostcode("");
-          setFile(null);
-          document.getElementById("file").value = null;
-          dispatch(getAllUsersAsync());
-        })
-        .catch((error) => {
-          // Handle dispatch error
-          setLoading(false);
-          console.error("Error adding product:", error);
-        });
+      setLoading(false);
+      toast.error(validationCheck.toastMsg, toastOptions);
     }
   }
 
@@ -249,12 +173,10 @@ export default function NewUser() {
                 </div>
                 <div className="newUserItem">
                   <label>IsAdmin</label>
-                  <select
-                    name="isAdmin"
-                    id="isAdmin"
-                    onChange={handleChange}
-                    value={inputs.isAdmin === true ? "true" : "false"}
-                  >
+                  <select name="isAdmin" id="isAdmin" onChange={handleChange}>
+                    <option disabled selected hidden>
+                      Select
+                    </option>
                     <option value="true">True</option>
                     <option value="false">False</option>
                   </select>
@@ -294,12 +216,10 @@ export default function NewUser() {
                 </div>
                 <div className="newUserItem">
                   <label>Status</label>
-                  <select
-                    name="status"
-                    id="status"
-                    onChange={handleChange}
-                    value={inputs.status}
-                  >
+                  <select name="status" id="status" onChange={handleChange}>
+                    <option disabled selected hidden>
+                      Select
+                    </option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
@@ -314,12 +234,6 @@ export default function NewUser() {
           </>
         )}
         {loading && <div className="loadingIndicator">Registering User...</div>}
-        {showSuccessPopup && (
-          <div className="successPopup">
-            <p>User registered successfully!</p>
-            <button onClick={() => setShowSuccessPopup(false)}>Close</button>
-          </div>
-        )}
       </div>
       <ToastContainer />
     </>

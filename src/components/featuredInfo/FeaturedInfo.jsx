@@ -2,7 +2,9 @@ import "./FeaturedInfo.css";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { useState, useEffect } from "react";
-import { userRequest } from "../../utils/requestMethods";
+import { getMonthlyIncomeAsync } from "../../redux/features/order/orderThunks";
+import { useDispatch } from "react-redux";
+import { getAllUsersAsync } from "../../redux/features/user/userThunks";
 
 function calculatePercentageDifference(number1, number2) {
   var difference = number1 - number2;
@@ -12,17 +14,31 @@ function calculatePercentageDifference(number1, number2) {
 }
 
 export default function FeaturedInfo() {
+  const dispatch = useDispatch();
   const [income, setIncome] = useState([]);
   const [perc, setPerc] = useState(0);
+  const [users, setUsers] = useState(0);
 
   useEffect(() => {
     const getIncome = async () => {
       try {
-        const res = await userRequest.get("/orders/income");
-        setIncome(res.data);
-        setPerc(
-          calculatePercentageDifference(res.data[0].total, res.data[1].total)
-        );
+        const getSalesStats = await dispatch(getMonthlyIncomeAsync());
+        if (getSalesStats.payload) {
+          const salesStatslist = getSalesStats.payload
+            .slice()
+            .sort((a, b) => a._id - b._id);
+
+          const date = new Date();
+          const month = date.getMonth() + 1;
+
+          setIncome(salesStatslist[month - 1].total);
+          setPerc(
+            calculatePercentageDifference(
+              salesStatslist[month - 2].total,
+              salesStatslist[month - 1].total
+            )
+          );
+        }
       } catch (err) {
         console.log(err);
       }
@@ -30,14 +46,27 @@ export default function FeaturedInfo() {
     getIncome();
   }, []);
 
-  // console.log(income[1].total);
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const getAllUsers = await dispatch(getAllUsersAsync());
+        if (getAllUsers.payload) {
+          const totalUsers = getAllUsers.payload.length;
+          setUsers(totalUsers);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    getUsers();
+  }, []);
 
   return (
     <div className="featured">
-      <div className="featuredItem">
+      {/* <div className="featuredItem">
         <span className="featuredtitle">Revenue</span>
         <div className="featuredMoneyContainer">
-          <span className="featuredMoney">${income[1]?.total}</span>
+          <span className="featuredMoney">₹{income[1]?.total}</span>
           <span className="featuredMoneyRate">
             { Math.abs(perc)}{" "}
             {perc < 0 ? (
@@ -48,27 +77,47 @@ export default function FeaturedInfo() {
           </span>
         </div>
         <div className="featuredSub">Compared to last month</div>
-      </div>
+      </div> */}
       <div className="featuredItem">
         <span className="featuredtitle">Sales</span>
         <div className="featuredMoneyContainer">
-          <span className="featuredMoney">$4,415</span>
+          <span className="featuredMoney">₹{income}</span>
           <span className="featuredMoneyRate">
-            -11.4 <ArrowDownwardIcon className="featuredIcon negative" />
+            {perc > 0 ? `+${perc}` : `-${perc}`}{" "}
+            {perc > 0 ? (
+              <ArrowUpwardIcon className="featuredIcon" />
+            ) : (
+              <ArrowDownwardIcon className="featuredIcon negative" />
+            )}
           </span>
         </div>
         <div className="featuredSub">Compared to last month</div>
       </div>
       <div className="featuredItem">
+        <span className="featuredtitle">Total Users</span>
+        <div className="featuredMoneyContainer">
+          <span className="featuredMoney">{users}</span>
+          {/* <span className="featuredMoneyRate">
+            {perc > 0 ? `+${perc}` : `-${perc}`}{" "}
+            {perc > 0 ? (
+              <ArrowUpwardIcon className="featuredIcon" />
+            ) : (
+              <ArrowDownwardIcon className="featuredIcon negative" />
+            )}
+          </span> */}
+        </div>
+        {/* <div className="featuredSub">Compared to last month</div> */}
+      </div>
+      {/* <div className="featuredItem">
         <span className="featuredtitle">Cost</span>
         <div className="featuredMoneyContainer">
-          <span className="featuredMoney">$2,225</span>
+          <span className="featuredMoney">₹2,225</span>
           <span className="featuredMoneyRate">
             +2.4 <ArrowUpwardIcon className="featuredIcon" />
           </span>
         </div>
         <div className="featuredSub">Compared to last month</div>
-      </div>
+      </div> */}
     </div>
   );
 }

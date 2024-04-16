@@ -4,6 +4,8 @@
   box-shadow: 0px 0px 15px -10px rgba(0, 0, 0, 0.75);
   padding: 20px;
   margin-right: 20px;
+  position: relative;
+  min-height: 300px;
 }
 
 .widgetSmTitle {
@@ -28,7 +30,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .widgetSmUser {
@@ -53,9 +55,22 @@
   background-color: #eeeef7;
   color: #555;
   cursor: pointer;
+  transition-duration: 0.4s;
+  &:hover {
+    color: #2a7ade;
+    background-color: #ebf1fe;
+    box-shadow: 0 10px 10px 0 rgba(0,0,0,0.19),0 5px 5px 0 rgba(0,0,0,0.19);
+  }
 }
 
 .widgetSmIcon {
   font-size: 16px;
   margin-right: 5px;
+}
+
+.widgetSmListDataNotAvbl {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }

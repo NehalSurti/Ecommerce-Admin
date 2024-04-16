@@ -23,6 +23,18 @@
   text-wrap: auto;
 }
 
+.orderList .orderListStatus {
+  padding: 5px 8px 5px 8px;
+  transform: translateY(-5px);
+  border-radius: 5px;
+  background-color: lightcoral;
+  font-weight: 400;
+}
+
+.orderList .delivered {
+  background-color: lightgreen;
+}
+
 .orderListEdit {
   border: none;
   border-radius: 10px;
