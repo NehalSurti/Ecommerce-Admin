@@ -10,6 +10,7 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toastOptions } from "../../services/ToastOptions";
+import { getProductsAsync } from "../../redux/features/product/productThunks";
 
 export default function Order() {
   const navigate = useNavigate();
@@ -35,21 +36,24 @@ export default function Order() {
 
   useEffect(() => {
     dispatch(getOrdersAsync());
+    dispatch(getProductsAsync());
   }, []);
 
   useEffect(() => {
-    setUpdatedOrder(order);
-    const updatedOrderProducts = order?.products.map((product) => {
-      const orderProduct = products.find(
-        (pdt) => pdt._id === product.productId
-      );
-      return {
-        ...product,
-        img: orderProduct.img,
-        title: orderProduct.title,
-      };
-    });
-    setOrderProducts(updatedOrderProducts);
+    if (order && products.length !== 0) {
+      setUpdatedOrder(order);
+      const updatedOrderProducts = order?.products.map((product) => {
+        const orderProduct = products?.find(
+          (pdt) => pdt._id === product.productId
+        );
+        return {
+          ...product,
+          img: orderProduct.img,
+          title: orderProduct.title,
+        };
+      });
+      setOrderProducts(updatedOrderProducts);
+    }
   }, [order, products]);
 
   useEffect(() => {
@@ -139,14 +143,21 @@ export default function Order() {
     { field: "quantity", headerName: "Quantity", width: 100 },
     { field: "color", headerName: "Color", width: 100 },
     { field: "size", headerName: "Size", width: 80 },
-    { field: "price", headerName: "Price", width: 100 },
+    {
+      field: "price",
+      headerName: "Price",
+      width: 100,
+      valueGetter: (params) => {
+        return `₹${params.row.price}`;
+      },
+    },
     {
       field: "TotalPrice",
       headerName: "Total Price",
       width: 100,
       valueGetter: (params) => {
         const totalPrice = params.row.quantity * params.row.price;
-        return totalPrice;
+        return `₹${totalPrice}`;
       },
     },
     {
@@ -212,7 +223,9 @@ export default function Order() {
                 </div>
                 <div className="orderInfoItem">
                   <span className="orderInfoKey">Amount:</span>
-                  <span className="orderInfoValue">{updatedOrder.amounts}</span>
+                  <span className="orderInfoValue">
+                    ₹{updatedOrder.amounts}
+                  </span>
                 </div>
                 <div className="orderInfoItem">
                   <span className="orderInfoKey">Status:</span>

@@ -83,6 +83,9 @@ export default function UserList() {
       field: "transactions",
       headerName: "Transaction Vol.",
       width: 130,
+      valueGetter: (params) => {
+        return `₹${params.row.transactions}`;
+      },
     },
     {
       field: "action",

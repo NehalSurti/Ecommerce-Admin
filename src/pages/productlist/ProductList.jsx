@@ -52,6 +52,9 @@ export default function ProductList() {
       field: "price",
       headerName: "Price",
       width: 100,
+      valueGetter: (params) => {
+        return `₹${params.row.price}`;
+      },
     },
     {
       field: "action",

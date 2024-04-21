@@ -199,7 +199,7 @@ export default function User() {
   return (
     <>
       <div className="user">
-        {!loading && (
+        {!loading ? (
           <>
             <div className="userTitleContainer">
               <h1 className="userTitle">Edit User</h1>
@@ -391,8 +391,9 @@ export default function User() {
               </div>
             </div>
           </>
+        ) : (
+          <div className="loadingIndicator"></div>
         )}
-        {loading && <div className="loadingIndicator">Updating...</div>}
       </div>
       <ToastContainer />
     </>

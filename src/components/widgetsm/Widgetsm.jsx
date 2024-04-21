@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import "./Widgetsm.css";
+import { useEffect, useState } from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useDispatch} from "react-redux";
+import { useDispatch } from "react-redux";
 import { getAllUsersAsync } from "../../redux/features/user/userThunks";
 import { useNavigate } from "react-router-dom";
 

@@ -12,6 +12,7 @@ export default function Home() {
   const dispatch = useDispatch();
   const [userStats, setUserStats] = useState([]);
   const [salesStats, setSalesStats] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const uniqueNamesSetUserId = new Set();
   const uniqueNamesSetSalesId = new Set();
@@ -35,6 +36,7 @@ export default function Home() {
   );
 
   useEffect(() => {
+    setLoading(true);
     const getUserStats = async () => {
       try {
         const getUserStats = await dispatch(getUserStatsAsync());
@@ -60,6 +62,8 @@ export default function Home() {
         }
       } catch (err) {
         console.log(err);
+      } finally {
+        setLoading(false);
       }
     };
     getUserStats();
@@ -98,29 +102,35 @@ export default function Home() {
 
   return (
     <div className="home">
-      <FeaturedInfo></FeaturedInfo>
-      <div className="homeCharts">
-        <div className="homeChartsLeft">
-          <Chart
-            data={userStats}
-            title="User Analytics"
-            grid
-            dataKey="Active User"
-          ></Chart>
-        </div>
-        <div className="homeChartsRight">
-          <Chart
-            data={salesStats}
-            title="Sales Analytics"
-            grid
-            dataKey="Sales"
-          ></Chart>
-        </div>
-      </div>
-      <div className="homeWidgets">
-        <Widgetsm></Widgetsm>
-        <Widgetlg></Widgetlg>
-      </div>
+      {loading ? (
+        <div className="loadingIndicator"></div>
+      ) : (
+        <>
+          <FeaturedInfo></FeaturedInfo>
+          <div className="homeCharts">
+            <div className="homeChartsLeft">
+              <Chart
+                data={userStats}
+                title="User Analytics"
+                grid
+                dataKey="Active User"
+              ></Chart>
+            </div>
+            <div className="homeChartsRight">
+              <Chart
+                data={salesStats}
+                title="Sales Analytics"
+                grid
+                dataKey="Sales"
+              ></Chart>
+            </div>
+          </div>
+          <div className="homeWidgets">
+            <Widgetsm></Widgetsm>
+            <Widgetlg></Widgetlg>
+          </div>
+        </>
+      )}
     </div>
   );
 }

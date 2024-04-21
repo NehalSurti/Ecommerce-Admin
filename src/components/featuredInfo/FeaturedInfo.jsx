@@ -2,7 +2,10 @@ import "./FeaturedInfo.css";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { useState, useEffect } from "react";
-import { getMonthlyIncomeAsync } from "../../redux/features/order/orderThunks";
+import {
+  getMonthlyIncomeAsync,
+  getOrdersAsync,
+} from "../../redux/features/order/orderThunks";
 import { useDispatch } from "react-redux";
 import { getAllUsersAsync } from "../../redux/features/user/userThunks";
 
@@ -15,9 +18,10 @@ function calculatePercentageDifference(number1, number2) {
 
 export default function FeaturedInfo() {
   const dispatch = useDispatch();
-  const [income, setIncome] = useState([]);
+  const [income, setIncome] = useState(0);
   const [perc, setPerc] = useState(0);
   const [users, setUsers] = useState(0);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     const getIncome = async () => {
@@ -43,10 +47,6 @@ export default function FeaturedInfo() {
         console.log(err);
       }
     };
-    getIncome();
-  }, []);
-
-  useEffect(() => {
     const getUsers = async () => {
       try {
         const getAllUsers = await dispatch(getAllUsersAsync());
@@ -58,66 +58,72 @@ export default function FeaturedInfo() {
         console.log(err);
       }
     };
+    const getOrders = async () => {
+      try {
+        const getAllOrders = await dispatch(getOrdersAsync());
+        if (getAllOrders.payload) {
+          const totalOrders = getAllOrders.payload;
+          const pendingOrders = [];
+          totalOrders.map((order) => {
+            if (order.status === "pending") {
+              // setOrders((prev) => [...prev, order]);
+              pendingOrders.push(order);
+            }
+          });
+          setOrders(pendingOrders);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    getIncome();
     getUsers();
+    getOrders();
   }, []);
 
   return (
     <div className="featured">
-      {/* <div className="featuredItem">
-        <span className="featuredtitle">Revenue</span>
-        <div className="featuredMoneyContainer">
-          <span className="featuredMoney">₹{income[1]?.total}</span>
-          <span className="featuredMoneyRate">
-            { Math.abs(perc)}{" "}
-            {perc < 0 ? (
-              <ArrowDownwardIcon className="featuredIcon negative" />
-            ) : (
-              <ArrowUpwardIcon className="featuredIcon" />
-            )}
-          </span>
-        </div>
-        <div className="featuredSub">Compared to last month</div>
-      </div> */}
       <div className="featuredItem">
         <span className="featuredtitle">Sales</span>
-        <div className="featuredMoneyContainer">
-          <span className="featuredMoney">₹{income}</span>
-          <span className="featuredMoneyRate">
-            {perc > 0 ? `+${perc}` : `-${perc}`}{" "}
-            {perc > 0 ? (
-              <ArrowUpwardIcon className="featuredIcon" />
-            ) : (
-              <ArrowDownwardIcon className="featuredIcon negative" />
-            )}
-          </span>
-        </div>
-        <div className="featuredSub">Compared to last month</div>
+        {income !== 0 ? (
+          <>
+            <div className="featuredMoneyContainer">
+              <span className="featuredMoney">₹{income}</span>
+              <span className="featuredMoneyRate">
+                {perc > 0 ? `+${perc}` : `-${perc}`}{" "}
+                {perc > 0 ? (
+                  <ArrowUpwardIcon className="featuredIcon" />
+                ) : (
+                  <ArrowDownwardIcon className="featuredIcon negative" />
+                )}
+              </span>
+            </div>
+            <div className="featuredSub">Compared to last month</div>
+          </>
+        ) : (
+          <div className="featuredDataNotAvbl">Data Not Available</div>
+        )}
       </div>
       <div className="featuredItem">
         <span className="featuredtitle">Total Users</span>
-        <div className="featuredMoneyContainer">
-          <span className="featuredMoney">{users}</span>
-          {/* <span className="featuredMoneyRate">
-            {perc > 0 ? `+${perc}` : `-${perc}`}{" "}
-            {perc > 0 ? (
-              <ArrowUpwardIcon className="featuredIcon" />
-            ) : (
-              <ArrowDownwardIcon className="featuredIcon negative" />
-            )}
-          </span> */}
-        </div>
-        {/* <div className="featuredSub">Compared to last month</div> */}
+        {users !== 0 ? (
+          <div className="featuredMoneyContainer">
+            <span className="featuredMoney">{users}</span>
+          </div>
+        ) : (
+          <div className="featuredDataNotAvbl">Data Not Available</div>
+        )}
       </div>
-      {/* <div className="featuredItem">
-        <span className="featuredtitle">Cost</span>
-        <div className="featuredMoneyContainer">
-          <span className="featuredMoney">₹2,225</span>
-          <span className="featuredMoneyRate">
-            +2.4 <ArrowUpwardIcon className="featuredIcon" />
-          </span>
-        </div>
-        <div className="featuredSub">Compared to last month</div>
-      </div> */}
+      <div className="featuredItem">
+        <span className="featuredtitle">Pending Orders</span>
+        {orders.length !== 0 ? (
+          <div className="featuredMoneyContainer">
+            <span className="featuredMoney">{orders.length}</span>
+          </div>
+        ) : (
+          <div className="featuredDataNotAvbl">Data Not Available</div>
+        )}
+      </div>
     </div>
   );
 }

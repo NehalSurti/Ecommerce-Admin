@@ -56,4 +56,14 @@
     height: 40px;
     border-radius: 50%;
     cursor: pointer;
+    object-fit: contain;
+}
+
+.logout {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  color: #01204F;
+  margin-right: 20px;
+  cursor: pointer;
 }

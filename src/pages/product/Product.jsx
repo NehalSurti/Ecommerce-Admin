@@ -3,7 +3,10 @@ import { useLocation } from "react-router-dom";
 import Chart from "../../components/chart/Chart";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useMemo, useEffect } from "react";
-import { updateProductAsync } from "../../redux/features/product/productThunks";
+import {
+  getProductsAsync,
+  updateProductAsync,
+} from "../../redux/features/product/productThunks";
 import {
   handleFileType,
   handleInputValidation,
@@ -25,7 +28,7 @@ export default function Product() {
   const [sizes, setSizes] = useState([]);
   const [image, setImage] = useState(null);
   const [pStats, setPStats] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const productId = location.pathname.split("/")[2];
   const { MonthlyIncomeforProduct } = useSelector((state) => state.order);
@@ -52,10 +55,12 @@ export default function Product() {
   );
 
   useEffect(() => {
+    dispatch(getProductsAsync());
     dispatch(getMonthlyIncomeforProductAsync(productId));
   }, []);
 
   useEffect(() => {
+    setLoading(true);
     setInputs({
       title: product?.title || "",
       desc: product?.desc || "",
@@ -66,6 +71,7 @@ export default function Product() {
     setColor(product?.color || []);
     setSizes(product?.size || []);
     setImage(product?.img || null);
+    setLoading(false);
   }, [product]);
 
   useEffect(() => {
@@ -204,147 +210,156 @@ export default function Product() {
   return (
     <>
       <div className="product">
-        <div className="productTitleContainer">
-          <h1 className="productTitle">Product</h1>
-        </div>
-        <div className="productTop">
-          <div className="productTopLeft">
-            <Chart
-              data={pStats}
-              dataKey="Sales"
-              title="Sales Performance"
-              grid
-            ></Chart>
-          </div>
-          <div className="productTopRight">
-            <div className="productInfoTop">
-              <img src={image} alt="" className="productInfoImg" />
-              <span className="productName">{product.title}</span>
+        {!loading && (
+          <>
+            <div className="productTitleContainer">
+              <h1 className="productTitle">Product</h1>
             </div>
-            <div className="productInfoBottom">
-              <div className="productInfoItem">
-                <span className="productInfoKey">Id:</span>
-                <span className="productInfoValue">{product._id}</span>
+            <div className="productTop">
+              <div className="productTopLeft">
+                <Chart
+                  data={pStats}
+                  dataKey="Sales"
+                  title="Sales Performance"
+                  grid
+                ></Chart>
               </div>
-              <div className="productInfoItem">
-                <span className="productInfoKey">Sales:</span>
-                <span className="productInfoValue">
-                  {MonthlyIncomeforProduct && MonthlyIncomeforProduct[0]
-                    ? MonthlyIncomeforProduct[0].totalSales
-                    : 0}
-                </span>
-              </div>
-              <div className="productInfoItem">
-                <span className="productInfoKey">In stock:</span>
-                <span className="productInfoValue">
-                  {product.inStock ? "True" : "False"}
-                </span>
+              <div className="productTopRight">
+                <div className="productInfoTop">
+                  <img src={image} alt="" className="productInfoImg" />
+                  <span className="productName">{inputs.title}</span>
+                </div>
+                <div className="productInfoBottom">
+                  <div className="productInfoItem">
+                    <span className="productInfoKey">Id:</span>
+                    <span className="productInfoValue">{product?._id}</span>
+                  </div>
+                  <div className="productInfoItem">
+                    <span className="productInfoKey">Sales:</span>
+                    <span className="productInfoValue">
+                      ₹
+                      {MonthlyIncomeforProduct && MonthlyIncomeforProduct[0]
+                        ? MonthlyIncomeforProduct[0].totalSales
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="productInfoItem">
+                    <span className="productInfoKey">In stock:</span>
+                    <span className="productInfoValue">
+                      {inputs.inStock ? "True" : "False"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-        <div className="productBottom">
-          <form className="productForm">
-            <div className="productFormTop">
-              <div className="productFormLeft">
-                <div className="editProductItem">
-                  <label>Product Name</label>
-                  <input
-                    type="text"
-                    name="title"
-                    onChange={handleChange}
-                    value={inputs.title}
-                    placeholder={product.title}
-                  />
-                </div>
-                <div className="editProductItem">
-                  <label>Product Description</label>
-                  <input
-                    type="text"
-                    name="desc"
-                    onChange={handleChange}
-                    value={inputs.desc}
-                    placeholder={product.desc}
-                  />
-                </div>
-                <div className="editProductItem">
-                  <label>Price</label>
-                  <input
-                    type="number"
-                    name="price"
-                    onChange={handleChange}
-                    value={inputs.price}
-                    placeholder={product.price}
-                  />
-                </div>
-                <div className="editProductItem">
-                  <label>Categories</label>
-                  <input
-                    name="categories"
-                    type="text"
-                    onChange={handleCategories}
-                    value={cat}
-                    placeholder={product.categories}
-                  />
-                </div>
-                <div className="editProductItem">
-                  <label>Sizes</label>
-                  <input
-                    name="size"
-                    type="text"
-                    onChange={handleSizes}
-                    value={sizes}
-                    placeholder={product.size}
-                  />
-                </div>
-                <div className="editProductItem">
-                  <label>Color</label>
-                  <input
-                    name="color"
-                    type="text"
-                    onChange={handleColors}
-                    value={color}
-                    placeholder={product.color}
-                  />
-                </div>
-                <div className="editProductItem">
-                  <label>In Stock</label>
-                  <select
-                    name="inStock"
-                    id="idStock"
-                    onChange={handleChange}
-                    value={inputs.inStock ? "true" : "false"}
-                  >
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </select>
-                </div>
-              </div>
-              <div className="productFormRight">
-                <div className="productUpload">
-                  {image ? (
-                    <>
-                      <img src={image} alt="" className="productUploadImg" />
-                      <label htmlFor="file"></label>
+            <div className="productBottom">
+              <form className="productForm">
+                <div className="productFormTop">
+                  <div className="productFormLeft">
+                    <div className="editProductItem">
+                      <label>Product Name</label>
                       <input
-                        type="file"
-                        id="file"
-                        onChange={(e) => setFile(e.target.files[0])}
+                        type="text"
+                        name="title"
+                        onChange={handleChange}
+                        value={inputs.title}
+                        placeholder={inputs.title}
                       />
-                    </>
-                  ) : (
-                    <div className="placeholderImage">Loading...</div>
-                  )}
+                    </div>
+                    <div className="editProductItem">
+                      <label>Product Description</label>
+                      <input
+                        type="text"
+                        name="desc"
+                        onChange={handleChange}
+                        value={inputs.desc}
+                        placeholder={inputs.desc}
+                      />
+                    </div>
+                    <div className="editProductItem">
+                      <label>Price</label>
+                      <input
+                        type="number"
+                        name="price"
+                        onChange={handleChange}
+                        value={inputs.price}
+                        placeholder={inputs.price}
+                      />
+                    </div>
+                    <div className="editProductItem">
+                      <label>Categories</label>
+                      <input
+                        name="categories"
+                        type="text"
+                        onChange={handleCategories}
+                        value={cat}
+                        placeholder={cat}
+                      />
+                    </div>
+                    <div className="editProductItem">
+                      <label>Sizes</label>
+                      <input
+                        name="size"
+                        type="text"
+                        onChange={handleSizes}
+                        value={sizes}
+                        placeholder={sizes}
+                      />
+                    </div>
+                    <div className="editProductItem">
+                      <label>Color</label>
+                      <input
+                        name="color"
+                        type="text"
+                        onChange={handleColors}
+                        value={color}
+                        placeholder={color}
+                      />
+                    </div>
+                    <div className="editProductItem">
+                      <label>In Stock</label>
+                      <select
+                        name="inStock"
+                        id="idStock"
+                        onChange={handleChange}
+                        value={inputs.inStock ? "true" : "false"}
+                      >
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="productFormRight">
+                    <div className="productUpload">
+                      {image ? (
+                        <>
+                          <img
+                            src={image}
+                            alt=""
+                            className="productUploadImg"
+                          />
+                          <label htmlFor="file"></label>
+                          <input
+                            type="file"
+                            id="file"
+                            onChange={(e) => setFile(e.target.files[0])}
+                          />
+                        </>
+                      ) : (
+                        <div className="placeholderImage">Loading...</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+                <div className="productFormBottom">
+                  <button onClick={handleClick} className="productButton">
+                    Update
+                  </button>
+                </div>
+              </form>
             </div>
-            <div className="productFormBottom">
-              <button onClick={handleClick} className="productButton">
-                Update
-              </button>
-            </div>
-          </form>
-        </div>
+          </>
+        )}
         {loading && <div className="loadingIndicator"></div>}
       </div>
       <ToastContainer />

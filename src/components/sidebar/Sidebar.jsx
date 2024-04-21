@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./Sidebar.css";
 import LineStyleOutlinedIcon from "@mui/icons-material/LineStyleOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
@@ -12,12 +12,27 @@ import DynamicFeedOutlinedIcon from "@mui/icons-material/DynamicFeedOutlined";
 import ChatBubbleOutlineOutlinedIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
 import ReportIcon from "@mui/icons-material/Report";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeLi, setActiveLi] = useState(null);
+
+  const pathName = location.pathname.split("/")[1];
+
+  useEffect(() => {
+    if (pathName === "") {
+      setActiveLi("li1");
+    } else if (pathName === "users" || pathName === "user") {
+      setActiveLi("li4");
+    } else if (pathName === "products" || pathName === "product") {
+      setActiveLi("li5");
+    } else if (pathName === "orders" || pathName === "order") {
+      setActiveLi("li6");
+    }
+  }, [pathName]);
 
   const handleLiClick = (liId, link) => {
     setActiveLi(liId);
@@ -39,13 +54,15 @@ export default function Sidebar() {
               <LineStyleOutlinedIcon className="sidebarIcon"></LineStyleOutlinedIcon>
               Home
             </li>
-            <li className="sidebarListItem">
+            <li className="sidebarListItem inactive-feature tooltip">
               <TimelineOutlinedIcon className="sidebarIcon"></TimelineOutlinedIcon>
               Analytics
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
-            <li className="sidebarListItem">
+            <li className="sidebarListItem inactive-feature tooltip">
               <TrendingUpOutlinedIcon className="sidebarIcon"></TrendingUpOutlinedIcon>
               Sales
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
           </ul>
         </div>
@@ -80,46 +97,53 @@ export default function Sidebar() {
               Transactions
             </li>
             <li
-              className={`sidebarListItem ${
+              className={`inactive-feature tooltip sidebarListItem ${
                 activeLi === "li7" ? "active" : ""
               }`}
             >
               <BarChartOutlinedIcon className="sidebarIcon"></BarChartOutlinedIcon>
               Reports
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
           </ul>
         </div>
         <div className="sidebarMenu">
           <h3 className="sidebarTitle">Notifications</h3>
           <ul className="sidebarList">
-            <li className="sidebarListItem active">
+            <li className="sidebarListItem inactive-feature tooltip">
               <MailOutlinedIcon className="sidebarIcon"></MailOutlinedIcon>
               Mail
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
-            <li className="sidebarListItem">
+            <li className="sidebarListItem inactive-feature tooltip">
               <DynamicFeedOutlinedIcon className="sidebarIcon"></DynamicFeedOutlinedIcon>
               Feedback
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
-            <li className="sidebarListItem">
+            <li className="sidebarListItem inactive-feature tooltip">
               <ChatBubbleOutlineOutlinedIcon className="sidebarIcon"></ChatBubbleOutlineOutlinedIcon>
               Messages
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
           </ul>
         </div>
         <div className="sidebarMenu">
           <h3 className="sidebarTitle">Staff</h3>
           <ul className="sidebarList">
-            <li className="sidebarListItem active">
+            <li className="sidebarListItem inactive-feature tooltip">
               <WorkOutlineOutlinedIcon className="sidebarIcon"></WorkOutlineOutlinedIcon>
               Manage
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
-            <li className="sidebarListItem">
+            <li className="sidebarListItem inactive-feature tooltip">
               <TimelineOutlinedIcon className="sidebarIcon"></TimelineOutlinedIcon>
               Analytics
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
-            <li className="sidebarListItem">
+            <li className="sidebarListItem inactive-feature tooltip">
               <ReportIcon className="sidebarIcon"></ReportIcon>
               Reports
+              <span class="tooltiptext">Coming Soon!</span>
             </li>
           </ul>
         </div>

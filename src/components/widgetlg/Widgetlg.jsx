@@ -54,8 +54,11 @@ export default function Widgetlg() {
                 <td className="widgetLgDate">
                   {format(order.createdAt, "MMMM dd, yyyy")}
                 </td>
-                <td className="widgetLgAmount">{order.amounts}</td>
-                <td className="widgetLgStatus">
+                <td className="widgetLgAmount">₹{order.amounts}</td>
+                <td
+                  onClick={() => navigate(`/order/${order._id}`)}
+                  className="widgetLgStatus"
+                >
                   <Button type={order.status} />
                 </td>
               </tr>

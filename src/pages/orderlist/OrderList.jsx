@@ -1,8 +1,8 @@
 import "./OrderList.css";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useNavigate} from "react-router-dom";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getOrdersAsync,
@@ -13,6 +13,12 @@ export default function OrderList() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { orders } = useSelector((state) => state.order);
+
+  useEffect(() => {
+    if (!localStorage.getItem("persist:admin")) {
+      navigate("/login");
+    }
+  }, []);
 
   useEffect(() => {
     dispatch(getOrdersAsync());
@@ -48,7 +54,14 @@ export default function OrderList() {
     },
     { field: "_id", headerName: "OrderID", width: 200 },
     { field: "userId", headerName: "UserID", width: 200 },
-    { field: "amounts", headerName: "Amount", width: 100 },
+    {
+      field: "amounts",
+      headerName: "Amount",
+      width: 100,
+      valueGetter: (params) => {
+        return `₹${params.row.amounts}`;
+      },
+    },
     {
       field: "address",
       headerName: "Address",

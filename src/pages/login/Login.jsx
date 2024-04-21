@@ -1,87 +1,95 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-// import { mobile } from "../utils/responsive";
 import { loginAsync } from "../../redux/features/user/userThunks";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { publicRequest } from "../../utils/requestMethods";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toastOptions } from "../../services/ToastOptions";
+import {
+  handleRequiredFields,
+  handleValidation,
+} from "../../services/InputValidation_Login";
+import "./Login.css";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  // const [checkClick, setCheckClick] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { currentUser, isFetching, error } = useSelector((state) => state.user);
-  const usernameRef = useRef(null);
-  const passwordRef = useRef(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // console.log("currentUser", currentUser);
-  // console.log("isFetching", isFetching);
-  // console.log("error", error);
- 
+  const { isFetching } = useSelector((state) => state.user);
 
   async function handleClick(e) {
     e.preventDefault();
-    dispatch(loginAsync({ username, password }))
+    setLoading(true);
 
-    const { data } = await publicRequest.post('/auth/login', {
-      username,
-      password,
-    });
-    // if (data.status === false) {
-    //   toast.error(data.message, toastOptions);
-    // }
-    if (data.status === true) {
-      console.log("data.status",data.status)
-      // localStorage.setItem("chat-app-user", JSON.stringify(data.user));
-      navigate("/");
+    if (handleRequiredFields(username, password)) {
+      toast.error("Please fill all fields!", toastOptions);
+      setLoading(false);
+      return;
     }
 
-    usernameRef.current.value = "";
-    passwordRef.current.value = "";
-    setUsername("");
-    setPassword("");
-    // setCheckClick(true);
+    const validationCheck = handleValidation(username);
 
-    // if (!error) {
-    //   navigate("/");
-    // }
+    if (validationCheck.check) {
+      try {
+        const login = await dispatch(loginAsync({ username, password }));
+
+        if (login.payload.status) {
+          setLoading(false);
+          setUsername("");
+          setPassword("");
+          navigate("/");
+        } else {
+          setLoading(false);
+          toast.error("Login not successfull", toastOptions);
+        }
+      } catch (error) {
+        setLoading(false);
+        toast.error("Login not successfull", toastOptions);
+      }
+    } else {
+      setLoading(false);
+      toast.error(validationCheck.toastMsg, toastOptions);
+    }
   }
 
-  // useEffect(() => {
-  //   console.log("current user :",currentUser);
-  //   if (currentUser !== null) {
-  //     navigate("/");
-  //   }
-  // }, []);
+  useEffect(() => {
+    localStorage.removeItem("persist:admin");
+  }, []);
 
   return (
-    <Container>
-      <Wrapper>
-        <Title>SIGN IN</Title>
-        <Form>
-          <Input
-            onChange={(e) => setUsername(e.target.value)}
-            ref={usernameRef}
-            placeholder="Username"
-          ></Input>
-          <Input
-            onChange={(e) => setPassword(e.target.value)}
-            ref={passwordRef}
-            type="password"
-            placeholder="Password"
-          ></Input>
-          <Button onClick={handleClick} disabled={isFetching}>
-            LOGIN
-          </Button>
-          {error && <Error>Something went wrong...</Error>}
-          <Link>DO NOT REMEMBER THE PASSWORD?</Link>
-          <Link>CREATE A NEW ACCOUNT</Link>
-        </Form>
-      </Wrapper>
-    </Container>
+    <>
+      <Container>
+        <Wrapper>
+          <Title>SIGN IN</Title>
+          <Form>
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+            ></Input>
+            <Input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              placeholder="Password"
+            ></Input>
+            <Button onClick={handleClick} disabled={isFetching}>
+              LOGIN
+            </Button>
+            {/* {loginError && <Error>Something went wrong...</Error>} */}
+            <Link className="inactive-feature tooltip">
+              DO NOT REMEMBER THE PASSWORD?
+              <span class="tooltiptext">Coming Soon!</span>
+            </Link>
+          </Form>
+        </Wrapper>
+      </Container>
+      <ToastContainer />
+    </>
   );
 }
 
@@ -92,9 +100,8 @@ const Container = styled.div`
       rgba(255, 255, 255, 0.5),
       rgba(255, 255, 255, 0.5)
     ),
-    url("https://images.pexels.com/photos/6984650/pexels-photo-6984650.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940")
+    url("https://images.pexels.com/photos/934070/pexels-photo-934070.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2")
       center;
-  background-color: red;
   background-size: cover;
   display: flex;
   align-items: center;
@@ -144,8 +151,4 @@ const Link = styled.a`
   font-size: 12px;
   text-decoration: underline;
   cursor: pointer;
-`;
-
-const Error = styled.span`
-  color: red;
 `;

@@ -1,35 +1,9 @@
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-// import { selectuser } from "../redux/features/user/userSlice";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 const BASE_URL = "http://localhost:5000/api";
-let TOKEN;
-// const { currentUser, isFetching, error } = useSelector((state) => state.user);
-
-// function token () {
-//   const { currentUser, isFetching, error } = useSelector((state) => state.user);
-//   return currentUser;
-// }
-async function token() {
-  try {
-    TOKEN = JSON.parse(JSON.parse(localStorage.getItem("persist:root")).user)
-      .currentUser.token;
-    console.log("request method token",TOKEN);
-  } catch (err) {
-    TOKEN = "";
-  }
-}
-token();
-
-// try {
-//   selectuser = token();
-//   console.log(" currentuser TOKEN",selectuser);
-//   TOKEN = selectuser.token;
-//     console.log("TOKEN",TOKEN);
-// } catch (err) {
-//   TOKEN = "";
-// }
-
-// const TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1NjQ5YWEwNjdlODVmZWUwMjA0ZmEwZCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTcwMzE2OTM5OSwiZXhwIjoxNzAzNDI4NTk5fQ.wOXw93-98vbfOrDimp2VJ4jS0Nw_Dnp1KxooJ8_-0VQVg2Ba9ezOyrYcnltr_AoGHCBjRBGOy5iNggarRwgHQklgwnul6DBiLQtcCtTZk8MjTc7Op8CvooLC9aQoOCfcODZ_HDhV3evoSgY_kHnthGXRsKw9nMT-aBS1cIO6h2G902bV6oSEQe2CSL9VBx7cJKg6zCxTYUWbS7fVTWxgAsOD4WgmG6GzV_wAk7wIsvphZzptbXpDDBnDCSyHvalFRJEZX8mTOLiLEgPEwN2ASgQD3JMaLBzdrOD8KhkuQhXmrsJr4RAuu51EOOfeKE8QelkYViKvcokCDDmI9fs9xA";
 
 export const publicRequest = axios.create({
   baseURL: BASE_URL,
@@ -37,5 +11,52 @@ export const publicRequest = axios.create({
 
 export const userRequest = axios.create({
   baseURL: BASE_URL,
-  headers: { Authorization: `Bearer ${TOKEN}` },
+  // headers: { Authorization: `Bearer ${TOKEN}` },
 });
+
+const UserRequestResponseInterceptor = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    userRequest.interceptors.request.use(
+      (config) => {
+        const token = currentUser ? currentUser.token : null;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    userRequest.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      async (error) => {
+        if (
+          error.response &&
+          (error.response.status === 403 || error.response.status === 401)
+        ) {
+          try {
+            localStorage.removeItem("persist:admin");
+            navigate("/login");
+          } catch (error) {}
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      // userRequest.interceptors.request.eject(requestInterceptor);
+      // userRequest.interceptors.response.eject(responseInterceptor);
+    };
+  }, [currentUser, dispatch]);
+
+  return null; // This component doesn't render anything
+};
+
+export default UserRequestResponseInterceptor;

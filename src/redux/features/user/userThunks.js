@@ -51,3 +51,8 @@ export const getUserStatsAsync = createAsyncThunk(
     return response.data;
   }
 );
+
+export const verifyTokenAsync = createAsyncThunk("user/verifyToken", async () => {
+  const response = await userRequest.get("/auth/tokenVerify");
+  return response.data;
+});

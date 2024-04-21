@@ -1,6 +1,6 @@
 import "./NewUser.css";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch} from "react-redux";
 import {
   registerAsync,
   getAllUsersAsync,
@@ -24,8 +24,6 @@ export default function NewUser() {
   const [country, setCountry] = useState("");
   const [postcode, setPostcode] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const { registerError } = useSelector((state) => state.user);
 
   function handleChange(e) {
     setInputs((prev) => {
@@ -233,7 +231,7 @@ export default function NewUser() {
             </form>
           </>
         )}
-        {loading && <div className="loadingIndicator">Registering User...</div>}
+        {loading && <div className="loadingIndicator"></div>}
       </div>
       <ToastContainer />
     </>

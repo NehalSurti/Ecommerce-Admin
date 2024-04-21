@@ -7,6 +7,7 @@ import {
   deleteUserAsync,
   updateUserAsync,
   getUserStatsAsync,
+  verifyTokenAsync,
 } from "./userThunks";
 
 const initialState = {
@@ -24,12 +25,18 @@ const initialState = {
   getUserError: false,
   deleteUserError: false,
   getUserStatsError: false,
+  verifiedToken: false,
+  verifiedTokenError: false,
 };
 
 const userSlice = createSlice({
   name: "user",
   initialState,
-  reducers: {},
+  reducers: {
+    logout: () => {
+      localStorage.removeItem("persist:admin");
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(registerAsync.pending, (state) => {
@@ -126,10 +133,25 @@ const userSlice = createSlice({
       .addCase(getUserStatsAsync.rejected, (state) => {
         state.isFetching = false;
         state.getUserStatsError = true;
+      })
+      .addCase(verifyTokenAsync.pending, (state) => {
+        state.isFetching = true;
+        state.verifiedTokenError = false;
+      })
+      .addCase(verifyTokenAsync.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.verifiedToken = true;
+        state.verifiedTokenError = false;
+      })
+      .addCase(verifyTokenAsync.rejected, (state) => {
+        state.isFetching = false;
+        state.verifiedTokenError = true;
       });
   },
 });
 
 export const selectuser = (state) => state.user.currentUser;
+
+export const { logout} = userSlice.actions;
 
 export default userSlice.reducer;
