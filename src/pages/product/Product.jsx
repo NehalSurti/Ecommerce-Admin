@@ -161,7 +161,7 @@ export default function Product() {
           .then(() => {
             if (error === false) {
               setLoading(false);
-              document.getElementById("file").value = null;
+              // document.getElementById("file").value = null;
               toast.success("Product updated successfully!", toastOptions);
             } else {
               setLoading(false);
@@ -193,7 +193,6 @@ export default function Product() {
         .then(() => {
           if (error === false) {
             setLoading(false);
-            document.getElementById("file").value = null;
             toast.success("Product updated successfully!", toastOptions);
           } else {
             setLoading(false);

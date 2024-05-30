@@ -89,6 +89,12 @@ export default function Order() {
     });
   }
 
+  function handlePaymentStatusChange(paymentStatusValue) {
+    setUpdatedOrder((prev) => {
+      return { ...prev, paymentStatus: paymentStatusValue };
+    });
+  }
+
   async function handleClick() {
     setLoading(true);
     try {
@@ -162,7 +168,7 @@ export default function Order() {
     },
     {
       field: "status",
-      headerName: "Status",
+      headerName: "Order Status",
       width: 100,
       renderCell: (params) => {
         return (
@@ -174,10 +180,11 @@ export default function Order() {
                 handleChange(params.row.productId, e.target.value)
               }
               value={params.row.status}
-              className={params.row.status === "delivered" ? "delivered" : ""}
+              className={params.row.status}
             >
               <option value="pending">Pending</option>
               <option value="delivered">Delivered</option>
+              <option value="canceled">Canceled</option>
             </select>
           </div>
         );
@@ -210,6 +217,9 @@ export default function Order() {
                   <div className="orderInfoValue">
                     <ul className="orderAddressElementLists">
                       <li className="orderAddressElementList">
+                        <b>{updatedOrder.address?.Name}</b>
+                      </li>
+                      <li className="orderAddressElementList">
                         {updatedOrder.address?.Add}
                       </li>
                       <li className="orderAddressElementList">
@@ -228,12 +238,16 @@ export default function Order() {
                   </span>
                 </div>
                 <div className="orderInfoItem">
-                  <span className="orderInfoKey">Status:</span>
+                  <span className="orderInfoKey">Payment Method:</span>
+                  <span className="orderInfoValue">
+                    {updatedOrder.paymentMethod}
+                  </span>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Order Status:</span>
                   <span
                     className={`orderInfoValue orderInfoStatus ${
-                      updatedOrder && updatedOrder.status === "delivered"
-                        ? "delivered"
-                        : ""
+                      updatedOrder && updatedOrder.status
                     }`}
                   >
                     {updatedOrder &&
@@ -241,6 +255,24 @@ export default function Order() {
                       updatedOrder.status.charAt(0).toUpperCase() +
                         updatedOrder.status.slice(1)}
                   </span>
+                </div>
+                <div className="orderInfoItem">
+                  <span className="orderInfoKey">Payment Status:</span>
+                  <div className="orderItemStatus">
+                    <select
+                      name="paymentStatus"
+                      id="paymentStatus"
+                      onChange={(e) =>
+                        handlePaymentStatusChange(e.target.value)
+                      }
+                      value={updatedOrder.paymentStatus}
+                      className={updatedOrder.paymentStatus}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="received">Received</option>
+                      <option value="canceled">Canceled</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="orderInfoItem">
                   <span className="orderInfoKey">Date:</span>

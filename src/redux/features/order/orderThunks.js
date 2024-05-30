@@ -13,14 +13,6 @@ export const getOrdersAsync = createAsyncThunk(
   }
 );
 
-export const getUserOrdersAsync = createAsyncThunk(
-  "order/getUserOrders",
-  async (userId) => {
-    const response = await userRequest.get(`/orders/find/${userId}`);
-    return response.data;
-  }
-);
-
 export const deleteOrderAsync = createAsyncThunk(
   "order/deleteOrder",
   async (id) => {

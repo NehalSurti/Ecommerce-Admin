@@ -54,21 +54,34 @@ export default function UserList() {
         return (
           <>
             <div className="addressContainer">
-              <ul className="addressElementLists">
-                <li className="addressElementList">{params.row.address.Add}</li>
-                <li className="addressElementList">
-                  {params.row.address.Country}
-                </li>
-                <li className="addressElementList">
-                  {params.row.address.Postcode}
-                </li>
-              </ul>
+              {params.row.address ? (
+                <ul className="addressElementLists">
+                  <li className="addressElementList">
+                    {params.row.address.Add}
+                  </li>
+                  <li className="addressElementList">
+                    {params.row.address.Country}
+                  </li>
+                  <li className="addressElementList">
+                    {params.row.address.Postcode}
+                  </li>
+                </ul>
+              ) : (
+                <p>Not Available</p>
+              )}
             </div>
           </>
         );
       },
     },
-    { field: "phone", headerName: "Phone", width: 120 },
+    {
+      field: "phone",
+      headerName: "Phone",
+      width: 120,
+      valueGetter: (params) => {
+        return params.row.phone || "Not Available";
+      },
+    },
     {
       field: "status",
       headerName: "Status",

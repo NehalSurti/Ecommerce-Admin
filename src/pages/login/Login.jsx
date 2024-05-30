@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { loginAsync } from "../../redux/features/user/userThunks";
+import {
+  checkTokenAndLoginAsync,
+  loginAsync,
+} from "../../redux/features/user/userThunks";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toastOptions } from "../../services/ToastOptions";
@@ -21,6 +24,10 @@ export default function Login() {
 
   const { isFetching } = useSelector((state) => state.user);
 
+  const [searchParams] = useSearchParams();
+
+  const userId = searchParams.get("id");
+
   async function handleClick(e) {
     e.preventDefault();
     setLoading(true);
@@ -36,7 +43,7 @@ export default function Login() {
     if (validationCheck.check) {
       try {
         const login = await dispatch(loginAsync({ username, password }));
-
+        console.log("login : ", login);
         if (login.payload.status) {
           setLoading(false);
           setUsername("");
@@ -60,34 +67,60 @@ export default function Login() {
     localStorage.removeItem("persist:admin");
   }, []);
 
+  useEffect(() => {
+    if (userId) {
+      setLoading(true);
+      const userDetail = localStorage.getItem("persist:rootReactApp");
+      const userToken = JSON.parse(JSON.parse(userDetail).user).currentUser
+        .token;
+
+      async function tokenAndLoginCheck() {
+        try {
+          const tokenCheckStatus = await dispatch(
+            checkTokenAndLoginAsync({ TOKEN: userToken })
+          );
+          if (tokenCheckStatus.payload) {
+            navigate("/");
+          }
+        } catch (error) {
+        } finally {
+          setLoading(false);
+        }
+      }
+      tokenAndLoginCheck();
+    }
+  }, []);
+
   return (
     <>
-      <Container>
-        <Wrapper>
-          <Title>SIGN IN</Title>
-          <Form>
-            <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-            ></Input>
-            <Input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              placeholder="Password"
-            ></Input>
-            <Button onClick={handleClick} disabled={isFetching}>
-              LOGIN
-            </Button>
-            {/* {loginError && <Error>Something went wrong...</Error>} */}
-            <Link className="inactive-feature tooltip">
-              DO NOT REMEMBER THE PASSWORD?
-              <span class="tooltiptext">Coming Soon!</span>
-            </Link>
-          </Form>
-        </Wrapper>
-      </Container>
+      {!loading && (
+        <Container>
+          <Wrapper>
+            <Title>SIGN IN</Title>
+            <Form>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+              ></Input>
+              <Input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder="Password"
+              ></Input>
+              <Button onClick={handleClick} disabled={isFetching}>
+                LOGIN
+              </Button>
+              {/* {loginError && <Error>Something went wrong...</Error>} */}
+              <Link className="inactive-feature tooltip">
+                DO NOT REMEMBER THE PASSWORD?
+                <span class="tooltiptext">Coming Soon!</span>
+              </Link>
+            </Form>
+          </Wrapper>
+        </Container>
+      )}
       <ToastContainer />
     </>
   );

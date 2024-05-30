@@ -23,16 +23,42 @@
   text-wrap: auto;
 }
 
+.orderList .orderListPaymentStatus {
+  padding: 5px 8px 5px 8px;
+  transform: translateY(-5px);
+  border-radius: 5px;
+  background-color: #ebf1fe;
+  color: #2a7ade;
+  font-weight: 400;
+
+  &.received {
+    background-color: #e5faf2;
+    color: #3bb077;
+  }
+
+  &.canceled {
+    background-color: #fff0f1;
+    color: #d95087;
+  }
+}
+
 .orderList .orderListStatus {
   padding: 5px 8px 5px 8px;
   transform: translateY(-5px);
   border-radius: 5px;
-  background-color: lightcoral;
+  background-color: #ebf1fe;
+  color: #2a7ade;
   font-weight: 400;
-}
 
-.orderList .delivered {
-  background-color: lightgreen;
+  &.delivered {
+    background-color: #e5faf2;
+    color: #3bb077;
+  }
+
+  &.canceled {
+    background-color: #fff0f1;
+    color: #d95087;
+  }
 }
 
 .orderListEdit {

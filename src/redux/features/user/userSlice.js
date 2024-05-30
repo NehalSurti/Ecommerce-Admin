@@ -7,7 +7,7 @@ import {
   deleteUserAsync,
   updateUserAsync,
   getUserStatsAsync,
-  verifyTokenAsync,
+  checkTokenAndLoginAsync,
 } from "./userThunks";
 
 const initialState = {
@@ -16,7 +16,6 @@ const initialState = {
   fetchedUser: null,
   userStats: [],
   isFetching: false,
-  error: false,
   registerNewUser: false,
   registerError: false,
   loginError: false,
@@ -25,16 +24,21 @@ const initialState = {
   getUserError: false,
   deleteUserError: false,
   getUserStatsError: false,
-  verifiedToken: false,
-  verifiedTokenError: false,
 };
 
 const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    logout: () => {
-      localStorage.removeItem("persist:admin");
+    logout: (state) => {
+      state.currentUser = null;
+      localStorage.removeItem("admin");
+    },
+    resetUserSlice: (state) => {
+      state.users = [];
+      state.fetchedUser = null;
+      state.userStats = [];
+      state.registerNewUser = false;
     },
   },
   extraReducers: (builder) => {
@@ -134,24 +138,22 @@ const userSlice = createSlice({
         state.isFetching = false;
         state.getUserStatsError = true;
       })
-      .addCase(verifyTokenAsync.pending, (state) => {
+      .addCase(checkTokenAndLoginAsync.pending, (state) => {
         state.isFetching = true;
-        state.verifiedTokenError = false;
+        state.loginError = false;
       })
-      .addCase(verifyTokenAsync.fulfilled, (state, action) => {
+      .addCase(checkTokenAndLoginAsync.fulfilled, (state, action) => {
         state.isFetching = false;
-        state.verifiedToken = true;
-        state.verifiedTokenError = false;
+        state.currentUser = action.payload;
+        state.loginError = false;
       })
-      .addCase(verifyTokenAsync.rejected, (state) => {
+      .addCase(checkTokenAndLoginAsync.rejected, (state) => {
         state.isFetching = false;
-        state.verifiedTokenError = true;
+        state.loginError = true;
       });
   },
 });
 
-export const selectuser = (state) => state.user.currentUser;
-
-export const { logout} = userSlice.actions;
+export const { logout, resetUserSlice } = userSlice.actions;
 
 export default userSlice.reducer;

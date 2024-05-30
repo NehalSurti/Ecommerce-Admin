@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   getOrdersAsync,
-  getUserOrdersAsync,
   deleteOrderAsync,
   updateOrderAsync,
   addOrderAsync,
@@ -20,7 +19,13 @@ const initialState = {
 const orderSlice = createSlice({
   name: "order",
   initialState,
-  reducers: {},
+  reducers: {
+    resetOrderSlice: (state) => {
+      state.orders = [];
+      state.monthlyIncome = [];
+      state.MonthlyIncomeforProduct = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getOrdersAsync.pending, (state) => {
@@ -76,18 +81,6 @@ const orderSlice = createSlice({
         state.isFetching = false;
         state.error = true;
       })
-      .addCase(getUserOrdersAsync.pending, (state) => {
-        state.isFetching = true;
-        state.error = false;
-      })
-      .addCase(getUserOrdersAsync.fulfilled, (state, action) => {
-        state.isFetching = false;
-        state.orders = action.payload;
-      })
-      .addCase(getUserOrdersAsync.rejected, (state) => {
-        state.isFetching = false;
-        state.error = true;
-      })
       .addCase(getMonthlyIncomeAsync.pending, (state) => {
         state.isFetching = true;
         state.error = false;
@@ -114,5 +107,7 @@ const orderSlice = createSlice({
       });
   },
 });
+
+export const { resetOrderSlice } = orderSlice.actions;
 
 export default orderSlice.reducer;

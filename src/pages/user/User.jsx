@@ -164,9 +164,9 @@ export default function User() {
             createdAt: fetchedUser?.createdAt || "",
           });
           setImage(fetchedUser?.img || null);
-          setStreet(fetchedUser?.address.Add || "");
-          setCountry(fetchedUser?.address.Country || "");
-          setPostcode(fetchedUser?.address.Postcode || "");
+          setStreet(fetchedUser?.address?.Add || "");
+          setCountry(fetchedUser?.address?.Country || "");
+          setPostcode(fetchedUser?.address?.Postcode || "");
         } else {
           setLoading(false);
           toast.error("User Data Not Available", toastOptions);
@@ -190,9 +190,9 @@ export default function User() {
         createdAt: fetchedUser?.createdAt || "",
       });
       setImage(fetchedUser?.img || null);
-      setStreet(fetchedUser?.address.Add || "");
-      setCountry(fetchedUser?.address.Country || "");
-      setPostcode(fetchedUser?.address.Postcode || "");
+      setStreet(fetchedUser?.address?.Add || "");
+      setCountry(fetchedUser?.address?.Country || "");
+      setPostcode(fetchedUser?.address?.Postcode || "");
     }
   }, [fetchedUser]);
 
@@ -235,18 +235,18 @@ export default function User() {
                   <span className="userShowTitle">Contact Details</span>
                   <div className="userShowInfo">
                     <PhoneAndroidIcon className="userShowIcon"></PhoneAndroidIcon>
-                    <span className="userShowInfoTitle">{inputs.phone}</span>
+                    <span className="userShowInfoTitle">{inputs.phone || "Not Available"}</span>
                   </div>
                   <div className="userShowInfo">
                     <MailOutlineIcon className="userShowIcon"></MailOutlineIcon>
-                    <span className="userShowInfoTitle">{inputs.email}</span>
+                    <span className="userShowInfoTitle">{inputs.email || "Not Available"}</span>
                   </div>
                   <div className="userShowInfo">
                     <LocationSearchingIcon className="userShowIcon"></LocationSearchingIcon>
                     <span className="userShowInfoTitle">
                       <div className="addressContainer">
                         <ul className="addressElementLists">
-                          <li className="addressElementList">{street}</li>
+                          <li className="addressElementList">{street || "Not Available"}</li>
                           <li className="addressElementList">{country}</li>
                           <li className="addressElementList">{postcode}</li>
                         </ul>

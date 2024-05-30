@@ -37,10 +37,11 @@ export default function Widgetlg() {
       {orders.length !== 0 ? (
         <table className="widgetLgTable">
           <tr className="widgetLgTr">
-            <th className="widgetLgTh">Customer</th>
+            <th className="widgetLgTh">Order Id</th>
             <th className="widgetLgTh">Date</th>
             <th className="widgetLgTh">Amount</th>
-            <th className="widgetLgTh">Status</th>
+            <th className="widgetLgTh">Payment Status</th>
+            <th className="widgetLgTh">Order Status</th>
           </tr>
           {orders.map((order) => {
             return (
@@ -49,12 +50,16 @@ export default function Widgetlg() {
                   onClick={() => navigate(`/order/${order._id}`)}
                   className="widgetLgUser"
                 >
-                  <span className="widgetLgName">{order.userId}</span>
+                  <span className="widgetLgName">{order._id}</span>
                 </td>
                 <td className="widgetLgDate">
                   {format(order.createdAt, "MMMM dd, yyyy")}
                 </td>
                 <td className="widgetLgAmount">₹{order.amounts}</td>
+                <td className={`widgetLgPaymentStatus ${order.paymentStatus}`}>
+                  {order.paymentStatus.charAt(0).toUpperCase() +
+                    order.paymentStatus.slice(1)}
+                </td>
                 <td
                   onClick={() => navigate(`/order/${order._id}`)}
                   className="widgetLgStatus"

@@ -1,9 +1,8 @@
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "/api";
 
 export const publicRequest = axios.create({
   baseURL: BASE_URL,
@@ -15,7 +14,6 @@ export const userRequest = axios.create({
 });
 
 const UserRequestResponseInterceptor = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
 
@@ -33,23 +31,6 @@ const UserRequestResponseInterceptor = () => {
       }
     );
 
-    userRequest.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      async (error) => {
-        if (
-          error.response &&
-          (error.response.status === 403 || error.response.status === 401)
-        ) {
-          try {
-            localStorage.removeItem("persist:admin");
-            navigate("/login");
-          } catch (error) {}
-        }
-        return Promise.reject(error);
-      }
-    );
     return () => {
       // userRequest.interceptors.request.eject(requestInterceptor);
       // userRequest.interceptors.response.eject(responseInterceptor);

@@ -52,7 +52,16 @@ export const getUserStatsAsync = createAsyncThunk(
   }
 );
 
-export const verifyTokenAsync = createAsyncThunk("user/verifyToken", async () => {
-  const response = await userRequest.get("/auth/tokenVerify");
-  return response.data;
-});
+export const checkTokenAndLoginAsync = createAsyncThunk(
+  "auth/checkTokenAndLogin",
+  async ({ TOKEN }) => {
+    try {
+      const response = await publicRequest.get(`/auth/tokenVerifyAndLogin`, {
+        headers: { Authorization: `Bearer ${TOKEN}` },
+      });
+      return response.data;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+);

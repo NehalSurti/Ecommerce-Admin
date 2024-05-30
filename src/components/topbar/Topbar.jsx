@@ -2,22 +2,25 @@ import React from "react";
 import "./Topbar.css";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../redux/features/user/userSlice";
-import { useNavigate } from "react-router-dom";
+import { resetOrderSlice } from "../../redux/features/order/orderSlice";
+import { resetProductSlice } from "../../redux/features/product/productSlice";
+import { resetUserSlice } from "../../redux/features/user/userSlice";
+import { resetAuthSlice } from "../../redux/features/auth/authSlice";
 // import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 // import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 // import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 export default function Topbar() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const { currentUser } = useSelector((state) => state.user);
 
   const handleClick = () => {
-    try {
-      dispatch(logout());
-      navigate("/login");
-    } catch (error) {}
+    dispatch(resetAuthSlice());
+    dispatch(resetUserSlice());
+    dispatch(resetProductSlice());
+    dispatch(resetOrderSlice());
+    dispatch(logout());
   };
 
   return (
